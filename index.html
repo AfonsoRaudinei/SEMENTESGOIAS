@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Sementes - Soja</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #F5F5F7 0%, #E5E5E7 100%);
+            padding: 20px;
+            padding-bottom: 100px;
+            color: #1D1D1F;
+            min-height: 100vh;
+        }
+
+        /* Layout Desktop - 2 Colunas */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 60% 38%;
+                align-items: start;
+            }
+
+            .results-card {
+                position: sticky;
+                top: 20px;
+                max-height: calc(100vh - 40px);
+                overflow-y: auto;
+            }
+        }
+
+        .left-column {
+            width: 100%;
+        }
+
+        .right-column {
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #1D1D1F;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 0.9em;
+            color: #86868B;
+        }
+
+        /* Configurações Globais */
+        .global-config {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .global-config h3 {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #86868B;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .global-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.9em;
+            color: #86868B;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            max-width: 200px;
+            padding: 10px 12px;
+            border: 1px solid #D1D1D6;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: white;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        /* Botão Adicionar Semente */
+        .btn-add-seed {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .btn-add-seed:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(52, 199, 89, 0.4);
+        }
+
+        /* Card de Semente */
+        .seed-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            position: relative;
+        }
+
+        .seed-inputs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .seed-inputs-grid .input-group {
+            margin-bottom: 0;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .seed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .seed-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .seed-badge.mine {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .seed-badge.competitor {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .btn-remove {
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 59, 48, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #FF3B30;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-remove:hover {
+            background: rgba(255, 59, 48, 0.2);
+        }
+
+        /* Toggle Plantas/Sementes */
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            background: #F5F5F7;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .toggle-option {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 500;
+            color: #86868B;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-option.active {
+            background: white;
+            color: #007AFF;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Checkbox TS */
+        .ts-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: #F5F5F7;
+            border-radius: 8px;
+            margin-top: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ts-checkbox:hover {
+            background: #E5E5E7;
+        }
+
+        .ts-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .ts-info {
+            flex: 1;
+            font-size: 0.9em;
+        }
+
+        .ts-name {
+            font-weight: 600;
+            color: #1D1D1F;
+        }
+
+        .ts-cost {
+            color: #86868B;
+            font-size: 0.85em;
+        }
+
+        .btn-config-ts {
+            padding: 6px 12px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-config-ts:hover {
+            background: #0051D5;
+        }
+
+        /* Modal TS */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1D1D1F;
+        }
+
+        .modal-header .btn-close {
+            width: 32px;
+            height: 32px;
+            background: #F5F5F7;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            color: #86868B;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-header .btn-close:hover {
+            background: #E5E5E7;
+        }
+
+        .ts-product {
+            background: #F5F5F7;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .ts-product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .ts-product-header h4 {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #1D1D1F;
+        }
+
+        .btn-add-product {
+            width: 100%;
+            padding: 12px;
+            background: #E5E5E7;
+            border: none;
+            border-radius: 8px;
+            color: #007AFF;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .btn-add-product:hover {
+            background: #D1D1D6;
+        }
+
+        .ts-summary {
+            border-top: 2px solid #E5E5E7;
+            padding-top: 16px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .ts-summary-value {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .ts-summary-label {
+            font-size: 0.85em;
+            color: #86868B;
+            margin-bottom: 16px;
+        }
+
+        .btn-save-ts {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-save-ts:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+        }
+
+        /* Resultados */
+        .results-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .results-card h3 {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1D1D1F;
+            margin-bottom: 20px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px 8px;
+            text-align: right;
+            border-bottom: 1px solid #E5E5E7;
+            font-size: 0.9em;
+        }
+
+        .results-table th:first-child,
+        .results-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .results-table th {
+            color: #86868B;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .results-table td {
+            color: #1D1D1F;
+        }
+
+        .results-table .total-row {
+            font-weight: 600;
+            font-size: 1em;
+            background: #F5F5F7;
+        }
+
+        .best-value {
+            color: #34C759;
+            font-weight: 600;
+        }
+
+        .best-value::after {
+            content: " 🏆";
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .global-row {
+                grid-template-columns: 1fr;
+            }
+
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .seed-inputs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .input-group input,
+            .input-group select {
+                max-width: 100%;
+            }
+
+            .results-table {
+                font-size: 0.85em;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 8px 4px;
+            }
+        }
+
+        /* Botão Flutuante Print */
+        .fab-print {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
+            transition: all 0.2s;
+            z-index: 999;
+        }
+
+        .fab-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.5);
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .fab-print,
+            .btn-remove,
+            .btn-add-seed,
+            .btn-config-ts {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🌱 Calculadora de Sementes de Soja</h1>
+        <p>Comparação técnica e econômica</p>
+    </div>
+
+    <!-- Configurações Globais -->
+    <div class="global-config">
+        <h3>Configurações Globais</h3>
+        <div class="global-row">
+            <div class="input-group">
+                <label>Preço Saca Soja (R$)</label>
+                <input type="number" id="precoSacaSoja" value="120" step="0.01" min="0">
+            </div>
+            <div class="input-group">
+                <label>Hectares Totais (conferência)</label>
+                <input type="number" id="hectaresTotal" value="0" step="1" min="0" readonly style="background: #F5F5F7; color: #86868B;">
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Coluna Esquerda: Sementes -->
+        <div class="left-column">
+            <!-- Botão Adicionar Semente -->
+            <button class="btn-add-seed" onclick="addSeed()">+ Adicionar Semente</button>
+
+            <!-- Container de Sementes -->
+            <div id="seedsContainer"></div>
+        </div>
+
+        <!-- Coluna Direita: Comparativo -->
+        <div class="right-column">
+            <!-- Resultados -->
+            <div class="results-card" id="resultsCard" style="display: none;">
+                <h3>📊 Comparativo Final</h3>
+                <div style="overflow-x: auto;">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal TS -->
+    <div class="modal-overlay" id="tsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tratamento de Sementes</h3>
+                <button class="btn-close" onclick="closeTSModal()">×</button>
+            </div>
+
+            <div class="input-group">
+                <label>Nome do Tratamento</label>
+                <input type="text" id="tsName" placeholder="Ex: Standak Top + Enraizador" style="max-width: 100%;">
+            </div>
+
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #E5E5E7;">
+
+            <button class="btn-add-product" onclick="addProduct()">+ Adicionar Produto</button>
+
+            <div id="productsContainer"></div>
+
+            <div class="ts-summary">
+                <div class="ts-summary-label">Custo Total do TS</div>
+                <div class="ts-summary-value" id="tsTotalCost">R$ 0,00/ha</div>
+                <button class="btn-save-ts" onclick="saveTSModal()">Salvar e Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante Print -->
+    <button class="fab-print" onclick="window.print()" title="Imprimir">🖨️</button>
+
+    <script>
+        let seeds = [];
+        let currentSeedIndex = null;
+
+        // Load from localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const saved = localStorage.getItem('seedsData');
+            if (saved) {
+                seeds = JSON.parse(saved);
+                renderSeeds();
+            }
+
+            // Load global configs
+            const precoSaca = localStorage.getItem('precoSacaSoja');
+            if (precoSaca) document.getElementById('precoSacaSoja').value = precoSaca;
+        });
+
+        // Save to localStorage
+        function saveData() {
+            localStorage.setItem('seedsData', JSON.stringify(seeds));
+            localStorage.setItem('precoSacaSoja', document.getElementById('precoSacaSoja').value);
+        }
+
+        // Auto-save on input change
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'precoSacaSoja') {
+                saveData();
+                calculateResults();
+            }
+        });
+
+        function addSeed() {
+            const seed = {
+                id: Date.now(),
+                type: seeds.length === 0 ? 'mine' : 'competitor',
+                name: '',
+                mode: 'plants', // plants ou seeds
+                population: 260000,
+                germination: 90,
+                spacing: 50,
+                priceBag: 450,
+                hectares: 100, // Hectares individuais por cultivar
+                hasTS: false,
+                ts: {
+                    name: '',
+                    products: []
+                }
+            };
+            seeds.push(seed);
+            saveData();
+            renderSeeds();
+        }
+
+        function removeSeed(id) {
+            seeds = seeds.filter(s => s.id !== id);
+            saveData();
+            renderSeeds();
+        }
+
+        function renderSeeds() {
+            const container = document.getElementById('seedsContainer');
+            container.innerHTML = '';
+
+            seeds.forEach((seed, index) => {
+                const card = document.createElement('div');
+                card.className = 'seed-card';
+                card.innerHTML = `
+                    <div class="seed-header">
+                        <span class="seed-badge ${seed.type}">
+                            ${seed.type === 'mine' ? '🟢 Minha Oferta' : '🔴 Concorrente'}
+                        </span>
+                        <button class="btn-remove" onclick="removeSeed(${seed.id})">×</button>
+                    </div>
+
+                    <div class="input-group full-width" style="margin-bottom: 16px;">
+                        <label>Nome da Cultivar</label>
+                        <input type="text" value="${seed.name}" 
+                            onchange="updateSeed(${index}, 'name', this.value)" style="max-width: 100%;">
+                    </div>
+
+                    <div class="toggle-group" style="margin-bottom: 16px;">
+                        <button class="toggle-option ${seed.mode === 'plants' ? 'active' : ''}"
+                            onclick="updateSeed(${index}, 'mode', 'plants')">
+                            Plantas/ha
+                        </button>
+                        <button class="toggle-option ${seed.mode === 'seeds' ? 'active' : ''}"
+                            onclick="updateSeed(${index}, 'mode', 'seeds')">
+                            Sementes/ha
+                        </button>
+                    </div>
+
+                    <div class="seed-inputs-grid">
+                        <div class="input-group">
+                            <label>${seed.mode === 'plants' ? 'População (plantas/ha)' : 'Sementes/ha'}</label>
+                            <input type="number" value="${seed.population}" 
+                                onchange="updateSeed(${index}, 'population', parseFloat(this.value))">
+                        </div>
+
+                        ${seed.mode === 'plants' ? `
+                        <div class="input-group">
+                            <label>Germinação (%)</label>
+                            <input type="number" value="${seed.germination}" step="1" min="0" max="100"
+                                onchange="updateSeed(${index}, 'germination', parseFloat(this.value))">
+                        </div>
+                        ` : '<div></div>'}
+
+                        <div class="input-group">
+                            <label>Espaçamento</label>
+                            <select onchange="updateSeed(${index}, 'spacing', parseFloat(this.value))">
+                                <option value="50" ${seed.spacing === 50 ? 'selected' : ''}>50 cm</option>
+                                <option value="45" ${seed.spacing === 45 ? 'selected' : ''}>45 cm</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Preço do Bag (R$)</label>
+                            <input type="number" value="${seed.priceBag}" step="0.01" min="0"
+                                onchange="updateSeed(${index}, 'priceBag', parseFloat(this.value))">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Área desta Cultivar (ha)</label>
+                            <input type="number" value="${seed.hectares}" step="1" min="0"
+                                onchange="updateSeed(${index}, 'hectares', parseFloat(this.value))">
+                        </div>
+                    </div>
+
+                    <div class="ts-checkbox" onclick="toggleTS(${index})">
+                        <input type="checkbox" ${seed.hasTS ? 'checked' : ''} 
+                            onclick="event.stopPropagation()">
+                        <div class="ts-info">
+                            <div class="ts-name">
+                                ${seed.hasTS && seed.ts.name ? seed.ts.name : 'Incluir Tratamento de Sementes'}
+                            </div>
+                            ${seed.hasTS && seed.ts.products.length > 0 ? 
+                                `<div class="ts-cost">R$ ${calculateTSCost(seed.ts).toFixed(2)}/ha</div>` : ''}
+                        </div>
+                        ${seed.hasTS ? 
+                            `<button class="btn-config-ts" onclick="openTSModal(${index}); event.stopPropagation();">⚙️ Configurar</button>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Atualizar total de hectares (soma de todas cultivares)
+            const totalHectares = seeds.reduce((sum, seed) => sum + (seed.hectares || 0), 0);
+            document.getElementById('hectaresTotal').value = totalHectares;
+
+            calculateResults();
+        }
+
+        function updateSeed(index, field, value) {
+            seeds[index][field] = value;
+            saveData();
+            renderSeeds();
+        }
+
+        function toggleTS(index) {
+            seeds[index].hasTS = !seeds[index].hasTS;
+            if (seeds[index].hasTS) {
+                openTSModal(index);
+            }
+            saveData();
+            renderSeeds();
+        }
+
+        // Modal TS Functions
+        function openTSModal(index) {
+            currentSeedIndex = index;
+            const seed = seeds[index];
+            
+            document.getElementById('tsName').value = seed.ts.name || '';
+            
+            const container = document.getElementById('productsContainer');
+            container.innerHTML = '';
+            
+            seed.ts.products.forEach((prod, i) => {
+                addProductToModal(prod, i);
+            });
+            
+            updateTSTotal();
+            document.getElementById('tsModal').classList.add('active');
+        }
+
+        function closeTSModal() {
+            document.getElementById('tsModal').classList.remove('active');
+            currentSeedIndex = null;
+        }
+
+        function addProduct() {
+            if (currentSeedIndex === null) return;
+            
+            const product = {
+                name: '',
+                dose: 0,
+                price: 0
+            };
+            
+            seeds[currentSeedIndex].ts.products.push(product);
+            addProductToModal(product, seeds[currentSeedIndex].ts.products.length - 1);
+            updateTSTotal();
+        }
+
+        function addProductToModal(product, index) {
+            const container = document.getElementById('productsContainer');
+            const div = document.createElement('div');
+            div.className = 'ts-product';
+            div.innerHTML = `
+                <div class="ts-product-header">
+                    <h4>Produto ${index + 1}</h4>
+                    <button class="btn-remove" onclick="removeProduct(${index})">×</button>
+                </div>
+                <div class="input-group">
+                    <label>Nome do Produto</label>
+                    <input type="text" value="${product.name}" style="max-width: 100%;"
+                        onchange="updateProduct(${index}, 'name', this.value)">
+                </div>
+                <div class="input-group">
+                    <label>Dose (mL/100kg)</label>
+                    <input type="number" value="${product.dose}" step="1" min="0"
+                        onchange="updateProduct(${index}, 'dose', parseFloat(this.value))">
+                </div>
+                <div class="input-group">
+                    <label>Preço (R$/litro)</label>
+                    <input type="number" value="${product.price}" step="0.01" min="0"
+                        onchange="updateProduct(${index}, 'price', parseFloat(this.value))">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function updateProduct(index, field, value) {
+            if (currentSeedIndex === null) return;
+            seeds[currentSeedIndex].ts.products[index][field] = value;
+            updateTSTotal();
+        }
+
+        function removeProduct(index) {
+            if (currentSeedIndex === null) return;
+            seeds[currentSeedIndex].ts.products.splice(index, 1);
+            openTSModal(currentSeedIndex);
+        }
+
+        function updateTSTotal() {
+            if (currentSeedIndex === null) return;
+            const cost = calculateTSCost(seeds[currentSeedIndex].ts);
+            document.getElementById('tsTotalCost').textContent = `R$ ${cost.toFixed(2)}/ha`;
+        }
+
+        function calculateTSCost(ts) {
+            return ts.products.reduce((total, prod) => {
+                // dose em mL/100kg convertido para L/100kg × preço/L
+                return total + ((prod.dose / 1000) * prod.price);
+            }, 0);
+        }
+
+        function saveTSModal() {
+            if (currentSeedIndex === null) return;
+            seeds[currentSeedIndex].ts.name = document.getElementById('tsName').value;
+            saveData();
+            closeTSModal();
+            renderSeeds();
+        }
+
+        // Cálculos
+        function calculateSeedData(seed) {
+            const hectares = seed.hectares || 0;
+            
+            // Calcular sementes necessárias/ha
+            let seedsPerHa;
+            if (seed.mode === 'plants') {
+                // Plantas/ha ÷ (germinação/100)
+                seedsPerHa = seed.population / (seed.germination / 100);
+            } else {
+                seedsPerHa = seed.population;
+            }
+            
+            // Metros lineares por hectare
+            const linearMeters = seed.spacing === 50 ? 20000 : 22222;
+            
+            // Sementes por metro
+            const seedsPerMeter = seedsPerHa / linearMeters;
+            
+            // Hectares que 1 bag planta
+            const haPerBag = 5000000 / seedsPerHa;
+            
+            // Bags necessários para área desta cultivar
+            const totalBags = hectares / haPerBag;
+            
+            // Custo semente por hectare
+            const seedCostPerHa = seed.priceBag / haPerBag;
+            
+            // Custo TS por hectare
+            const tsCostPerHa = seed.hasTS ? calculateTSCost(seed.ts) : 0;
+            
+            // Custo total por hectare
+            const totalCostPerHa = seedCostPerHa + tsCostPerHa;
+            
+            // Custo total para área desta cultivar
+            const totalCost = totalCostPerHa * hectares;
+            
+            // Conversão em sacas
+            const priceSaca = parseFloat(document.getElementById('precoSacaSoja').value) || 120;
+            const costInSacas = totalCostPerHa / priceSaca;
+            
+            return {
+                seedsPerHa: Math.round(seedsPerHa),
+                seedsPerMeter: seedsPerMeter.toFixed(1),
+                totalBags: totalBags.toFixed(2),
+                seedCostPerHa: seedCostPerHa.toFixed(2),
+                tsCostPerHa: tsCostPerHa.toFixed(2),
+                totalCostPerHa: totalCostPerHa.toFixed(2),
+                costInSacas: costInSacas.toFixed(2),
+                totalCost: totalCost.toFixed(2)
+            };
+        }
+
+        function calculateResults() {
+            if (seeds.length === 0) {
+                document.getElementById('resultsCard').style.display = 'none';
+                return;
+            }
+
+            const results = seeds.map(seed => ({
+                seed,
+                data: calculateSeedData(seed)
+            }));
+
+            // Encontrar melhor valor
+            const bestPerHa = Math.min(...results.map(r => parseFloat(r.data.totalCostPerHa)));
+            const bestTotal = Math.min(...results.map(r => parseFloat(r.data.totalCost)));
+
+            // Render table
+            const table = document.getElementById('resultsTable');
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+
+            // Header
+            thead.innerHTML = '<th>Item</th>';
+            results.forEach(r => {
+                thead.innerHTML += `<th>${r.seed.name || 'Sem nome'}</th>`;
+            });
+
+            // Body
+            const rows = [
+                { label: 'Área (ha)', key: 'hectares', source: 'seed' },
+                { label: 'Sementes/ha', key: 'seedsPerHa' },
+                { label: 'Sementes/metro', key: 'seedsPerMeter' },
+                { label: 'Bags necessários', key: 'totalBags' },
+                { label: 'Custo semente/ha', key: 'seedCostPerHa', format: 'currency' },
+                { label: 'Custo TS/ha', key: 'tsCostPerHa', format: 'currency' },
+                { label: 'CUSTO TOTAL/HA', key: 'totalCostPerHa', format: 'currency', class: 'total-row', best: bestPerHa },
+                { label: 'Em sacas soja', key: 'costInSacas', suffix: ' sc' },
+                { label: 'CUSTO TOTAL', key: 'totalCost', format: 'currency', class: 'total-row', best: bestTotal }
+            ];
+
+            tbody.innerHTML = '';
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.class) tr.className = row.class;
+                
+                tr.innerHTML = `<td>${row.label}</td>`;
+                results.forEach(r => {
+                    const value = row.source === 'seed' ? r.seed[row.key] : r.data[row.key];
+                    let displayValue = value;
+                    
+                    if (row.format === 'currency') {
+                        displayValue = `R$ ${value}`;
+                    }
+                    if (row.suffix) {
+                        displayValue += row.suffix;
+                    }
+                    
+                    const isBest = row.best && parseFloat(value) === row.best;
+                    tr.innerHTML += `<td class="${isBest ? 'best-value' : ''}">${displayValue}</td>`;
+                });
+                
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('resultsCard').style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
