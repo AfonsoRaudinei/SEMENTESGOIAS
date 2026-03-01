@@ -1,1041 +1,1434 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Sementes - Soja</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(180deg, #F5F5F7 0%, #E5E5E7 100%);
-            padding: 20px;
-            padding-bottom: 100px;
-            color: #1D1D1F;
-            min-height: 100vh;
-        }
-
-        /* Layout Desktop - 2 Colunas */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        @media (min-width: 1024px) {
-            .main-layout {
-                grid-template-columns: 60% 38%;
-                align-items: start;
-            }
-
-            .results-card {
-                position: sticky;
-                top: 20px;
-                max-height: calc(100vh - 40px);
-                overflow-y: auto;
-            }
-        }
-
-        .left-column {
-            width: 100%;
-        }
-
-        .right-column {
-            width: 100%;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 1.8em;
-            font-weight: 600;
-            color: #1D1D1F;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 0.9em;
-            color: #86868B;
-        }
-
-        /* Configurações Globais */
-        .global-config {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .global-config h3 {
-            font-size: 0.75em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #86868B;
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
-
-        .global-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .input-group {
-            margin-bottom: 16px;
-        }
-
-        .input-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 0.9em;
-            color: #86868B;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .input-group input,
-        .input-group select {
-            width: 100%;
-            max-width: 200px;
-            padding: 10px 12px;
-            border: 1px solid #D1D1D6;
-            border-radius: 8px;
-            font-size: 0.95em;
-            background: white;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .input-group input:focus,
-        .input-group select:focus {
-            outline: none;
-            border-color: #007AFF;
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-        }
-
-        /* Botão Adicionar Semente */
-        .btn-add-seed {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #34C759 0%, #28A745 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 0.95em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
-            margin-bottom: 20px;
-        }
-
-        .btn-add-seed:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(52, 199, 89, 0.4);
-        }
-
-        /* Card de Semente */
-        .seed-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-            position: relative;
-        }
-
-        .seed-inputs-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .seed-inputs-grid .input-group {
-            margin-bottom: 0;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        .seed-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .seed-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-
-        .seed-badge.mine {
-            background: #E8F5E9;
-            color: #2E7D32;
-        }
-
-        .seed-badge.competitor {
-            background: #E3F2FD;
-            color: #1976D2;
-        }
-
-        .btn-remove {
-            width: 28px;
-            height: 28px;
-            background: rgba(255, 59, 48, 0.1);
-            border: none;
-            border-radius: 6px;
-            color: #FF3B30;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-remove:hover {
-            background: rgba(255, 59, 48, 0.2);
-        }
-
-        /* Toggle Plantas/Sementes */
-        .toggle-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            background: #F5F5F7;
-            padding: 4px;
-            border-radius: 8px;
-        }
-
-        .toggle-option {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            background: transparent;
-            border-radius: 6px;
-            font-size: 0.9em;
-            font-weight: 500;
-            color: #86868B;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .toggle-option.active {
-            background: white;
-            color: #007AFF;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Checkbox TS */
-        .ts-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px;
-            background: #F5F5F7;
-            border-radius: 8px;
-            margin-top: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .ts-checkbox:hover {
-            background: #E5E5E7;
-        }
-
-        .ts-checkbox input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .ts-info {
-            flex: 1;
-            font-size: 0.9em;
-        }
-
-        .ts-name {
-            font-weight: 600;
-            color: #1D1D1F;
-        }
-
-        .ts-cost {
-            color: #86868B;
-            font-size: 0.85em;
-        }
-
-        .btn-config-ts {
-            padding: 6px 12px;
-            background: #007AFF;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-config-ts:hover {
-            background: #0051D5;
-        }
-
-        /* Modal TS */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h3 {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #1D1D1F;
-        }
-
-        .modal-header .btn-close {
-            width: 32px;
-            height: 32px;
-            background: #F5F5F7;
-            border: none;
-            border-radius: 8px;
-            font-size: 20px;
-            color: #86868B;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .modal-header .btn-close:hover {
-            background: #E5E5E7;
-        }
-
-        .ts-product {
-            background: #F5F5F7;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .ts-product-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .ts-product-header h4 {
-            font-size: 0.9em;
-            font-weight: 600;
-            color: #1D1D1F;
-        }
-
-        .btn-add-product {
-            width: 100%;
-            padding: 12px;
-            background: #E5E5E7;
-            border: none;
-            border-radius: 8px;
-            color: #007AFF;
-            font-size: 0.9em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 16px;
-        }
-
-        .btn-add-product:hover {
-            background: #D1D1D6;
-        }
-
-        .ts-summary {
-            border-top: 2px solid #E5E5E7;
-            padding-top: 16px;
-            margin-top: 16px;
-            text-align: center;
-        }
-
-        .ts-summary-value {
-            font-size: 1.4em;
-            font-weight: 600;
-            color: #007AFF;
-        }
-
-        .ts-summary-label {
-            font-size: 0.85em;
-            color: #86868B;
-            margin-bottom: 16px;
-        }
-
-        .btn-save-ts {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 0.95em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-        }
-
-        .btn-save-ts:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
-        }
-
-        /* Resultados */
-        .results-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .results-card h3 {
-            text-align: center;
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #1D1D1F;
-            margin-bottom: 20px;
-        }
-
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .results-table th,
-        .results-table td {
-            padding: 12px 8px;
-            text-align: right;
-            border-bottom: 1px solid #E5E5E7;
-            font-size: 0.9em;
-        }
-
-        .results-table th:first-child,
-        .results-table td:first-child {
-            text-align: left;
-            font-weight: 500;
-        }
-
-        .results-table th {
-            color: #86868B;
-            font-weight: 600;
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .results-table td {
-            color: #1D1D1F;
-        }
-
-        .results-table .total-row {
-            font-weight: 600;
-            font-size: 1em;
-            background: #F5F5F7;
-        }
-
-        .best-value {
-            color: #34C759;
-            font-weight: 600;
-        }
-
-        .best-value::after {
-            content: " 🏆";
-        }
-
-        /* Responsivo */
-        @media (max-width: 768px) {
-            body {
-                padding: 12px;
-            }
-
-            .global-row {
-                grid-template-columns: 1fr;
-            }
-
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .seed-inputs-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .input-group input,
-            .input-group select {
-                max-width: 100%;
-            }
-
-            .results-table {
-                font-size: 0.85em;
-            }
-
-            .results-table th,
-            .results-table td {
-                padding: 8px 4px;
-            }
-        }
-
-        /* Botão Flutuante Print */
-        .fab-print {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
-            border: none;
-            border-radius: 30px;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
-            transition: all 0.2s;
-            z-index: 999;
-        }
-
-        .fab-print:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.5);
-        }
-
-        @media print {
-            body {
-                background: white;
-            }
-            .fab-print,
-            .btn-remove,
-            .btn-add-seed,
-            .btn-config-ts {
-                display: none;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#007AFF">
+<title>Catálogo Sementes</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#007AFF;--blue-dark:#0051D5;
+  --gray-bg:#F5F5F7;--gray-bg2:#E5E5E7;
+  --text:#1D1D1F;--text2:#86868B;--text3:#C7C7CC;
+  --green:#34C759;--red:#FF3B30;
+  --border:#D1D1D6;--border-soft:#E5E5E7;
+  --green-bg:#E8F5E9;--red-bg:#FFEBEE;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom)
+}
+body{font-family:var(--font);background:linear-gradient(180deg,#F5F5F7 0%,#E5E5E7 100%);min-height:100vh;color:var(--text);-webkit-font-smoothing:antialiased}
+/* NAV */
+.navbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,0,0,0.07);padding-top:var(--sat)}
+.navbar-inner{display:flex;align-items:center;justify-content:space-between;padding:13px 18px}
+.nav-logo{font-size:1.05em;font-weight:700;letter-spacing:-0.3px}.nav-logo span{color:var(--blue)}
+.nav-menu-btn{width:34px;height:34px;border-radius:9px;border:none;background:var(--gray-bg);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.nav-menu-btn:hover{background:var(--gray-bg2)}
+.ham{width:16px;height:10px;display:flex;flex-direction:column;justify-content:space-between}
+.ham span{width:100%;height:1.5px;background:var(--text);border-radius:1px}
+.nav-tabs{display:flex;overflow-x:auto;padding:0 10px 11px;gap:5px;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex-shrink:0;padding:6px 13px;border-radius:20px;border:none;background:transparent;color:var(--text2);font-size:.82em;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:var(--font)}
+.nav-tab.active{background:var(--blue);color:white}
+.nav-tab:hover:not(.active){background:var(--gray-bg2);color:var(--text)}
+/* SIDEBAR */
+.sb-overlay{display:none;position:fixed;inset:0;z-index:1998;background:rgba(0,0,0,.38);backdrop-filter:blur(4px)}
+.sb-overlay.open{display:block}
+.sidebar{position:fixed;top:0;right:-310px;bottom:0;width:290px;z-index:1999;background:white;transition:right .3s cubic-bezier(.4,0,.2,1);padding-top:calc(var(--sat) + 56px);box-shadow:-4px 0 24px rgba(0,0,0,.1)}
+.sidebar.open{right:0}
+.sb-title{padding:0 18px 14px;font-size:.68em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)}
+.sb-item{display:flex;align-items:center;gap:12px;padding:13px 18px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border-soft)}
+.sb-item:hover{background:var(--gray-bg)}.sb-item.active{background:rgba(0,122,255,.05)}
+.sb-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.72em;font-weight:700;flex-shrink:0}
+.sb-name{font-size:.92em;font-weight:500}.sb-sub{font-size:.75em;color:var(--text2)}
+/* MAIN */
+.main{padding-top:108px;padding-bottom:calc(90px + var(--sab));min-height:100vh}
+.section{display:none}.section.active{display:block}
+.page-header{padding:18px 18px 10px}
+.page-title{font-size:1.5em;font-weight:700;letter-spacing:-.5px}
+.page-sub{font-size:.82em;color:var(--text2);margin-top:3px}
+/* FILTERS */
+.filters{padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.f-label{font-size:.68em;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;width:100%}
+select.fsel{padding:6px 26px 6px 9px;border:1px solid var(--border);border-radius:8px;background:white;font-size:.8em;font-family:var(--font);color:var(--text);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;min-width:120px}
+select.fsel:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(0,122,255,.1)}
+.btn-reset{padding:6px 11px;border:1px solid var(--border);border-radius:8px;background:var(--gray-bg);color:var(--text2);font-size:.8em;font-family:var(--font);cursor:pointer}
+.btn-reset:hover{background:var(--gray-bg2)}
+/* CARDS */
+.cards-grid{padding:0 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px}
+.card{background:rgba(255,255,255,.95);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.07),0 2px 8px rgba(0,0,0,.04);overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer}
+.card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.09)}
+.card-photo{width:100%;height:150px;background:linear-gradient(135deg,#E8F5E9,#C8E6C9);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.card-photo img{width:100%;height:100%;object-fit:cover}
+.card-photo-ph{font-size:.68em;color:var(--text3);font-weight:500;text-align:center;padding:8px}
+.cbadge{position:absolute;top:9px;right:9px;padding:2px 7px;border-radius:5px;font-size:.62em;font-weight:700;text-transform:uppercase}
+.bl{background:var(--blue);color:white}.or{background:#FF9500;color:white}
+.card-body{padding:14px}
+.card-name{font-size:1em;font-weight:700;margin-bottom:2px}
+.card-obt{font-size:.75em;color:var(--text2);margin-bottom:9px}
+.card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:9px}
+.tag{padding:2px 7px;border-radius:5px;font-size:.68em;font-weight:500;background:var(--gray-bg);color:var(--text2)}
+.tg{background:var(--green-bg);color:#2E7D32}.tr{background:var(--red-bg);color:#C62828}.tb{background:rgba(0,122,255,.08);color:var(--blue)}
+.card-specs{display:grid;grid-template-columns:1fr 1fr;gap:7px;border-top:1px solid var(--border-soft);padding-top:9px}
+.spec-label{font-size:.63em;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.spec-value{font-size:.84em;font-weight:600}
+.card-actions{display:flex;gap:7px;padding:9px 14px 13px;border-top:1px solid var(--border-soft)}
+.btn-act{flex:1;padding:7px;border:1px solid var(--border);border-radius:8px;background:white;color:var(--text2);font-size:.76em;font-family:var(--font);cursor:pointer;transition:all .2s}
+.btn-act:hover{background:var(--gray-bg)}
+.btn-act.edit:hover{border-color:var(--blue);color:var(--blue)}
+.btn-act.del:hover{border-color:var(--red);color:var(--red)}
+/* BANNER COLAPSÁVEL NO CARD */
+.card-banner-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;border-top:1px solid var(--border-soft);background:var(--gray-bg);transition:background .15s;user-select:none}
+.card-banner-toggle:hover{background:var(--gray-bg2)}
+.cbt-label{font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.cbt-chev{font-size:.6em;color:var(--text3);transition:transform .2s}
+.cbt-chev.open{transform:rotate(90deg)}
+.card-banner-body{display:none;overflow:hidden}
+.card-banner-body.open{display:block;animation:fadeIn .18s}
+.banner-slide{position:relative;overflow:hidden;cursor:pointer}
+.banner-slide img{width:100%;display:block;object-fit:cover}
+.banner-slide-ph{width:100%;display:flex;align-items:center;justify-content:center;padding:26px 18px;text-align:center;flex-direction:column;gap:7px}
+.bs-title{font-size:1.1em;font-weight:800;letter-spacing:-.2px}
+.bs-sub{font-size:.78em;opacity:.8}
+.bs-cta{display:inline-flex;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:5px 14px;font-size:.74em;font-weight:600;margin-top:4px}
+.banner-dots{display:flex;justify-content:center;gap:5px;padding:8px 0 4px;background:inherit}
+.bdot2{width:5px;height:5px;border-radius:3px;background:var(--border);transition:all .2s}
+.bdot2.active{background:var(--blue);width:14px}
+/* SECTION BANNER (topo) */
+.section-banner-wrap{padding:0 14px 10px;display:none}
+.section-banner-wrap.has-banners{display:block}
+.section-banner-carousel{border-radius:13px;overflow:hidden;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.09)}
+.sbc-track{display:flex;transition:transform .38s cubic-bezier(.4,0,.2,1)}
+.sbc-slide{flex-shrink:0;width:100%;cursor:pointer}
+.sbc-slide img{width:100%;display:block;max-height:160px;object-fit:cover}
+.sbc-slide-ph{width:100%;padding:28px 18px;display:flex;flex-direction:column;gap:7px}
+.sbc-dots{display:flex;justify-content:center;gap:5px;padding:8px 0 2px}
+.sbc-nav{position:absolute;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:14px;background:rgba(255,255,255,.82);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75em;color:var(--text)}
+.sbc-nav.prev{left:7px}.sbc-nav.next{right:7px}
+/* TSI TABS */
+.tsi-tabs{display:flex;gap:5px;padding:0 14px 13px}
+.tsi-tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:white;font-size:.84em;font-weight:500;font-family:var(--font);color:var(--text2);cursor:pointer;transition:all .2s}
+.tsi-tab.active{background:var(--blue);color:white;border-color:var(--blue)}
+.prod-card{background:white;border-radius:13px;margin:0 14px 10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.prod-card-header{display:flex;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;border-bottom:1px solid transparent;transition:background .15s}
+.prod-card-header:hover{background:var(--gray-bg)}
+.prod-card-header.expanded{border-bottom-color:var(--border-soft)}
+.prod-thumb{width:46px;height:46px;border-radius:9px;object-fit:cover;border:1px solid var(--border-soft);flex-shrink:0;background:var(--gray-bg);display:flex;align-items:center;justify-content:center;font-size:.62em;color:var(--text3);font-weight:600;text-align:center;overflow:hidden}
+.prod-thumb img{width:100%;height:100%;object-fit:cover}
+.prod-info{flex:1;min-width:0}
+.prod-name{font-size:.92em;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prod-cat{font-size:.72em;color:var(--text2)}
+.prod-used{font-size:.67em;color:var(--text3);margin-top:1px}
+.prod-chev{color:var(--text3);font-size:.65em;transition:transform .2s;flex-shrink:0}
+.prod-card-header.expanded .prod-chev{transform:rotate(90deg)}
+.prod-body{display:none;padding:13px}
+.prod-body.show{display:block}
+.prod-img-area{border:2px dashed var(--border);border-radius:10px;text-align:center;padding:16px;background:var(--gray-bg);position:relative;cursor:pointer;transition:all .2s;margin-bottom:11px}
+.prod-img-area:hover{border-color:var(--blue);background:#F0F9FF}
+.prod-img-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.prod-img-preview{width:100%;max-height:110px;object-fit:contain;border-radius:8px;display:block;margin-bottom:7px}
+.prod-img-rm{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid var(--red);border-radius:7px;color:var(--red);font-size:.72em;cursor:pointer;background:white;margin-bottom:7px}
+.btn-save-prod{width:100%;padding:9px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:white;border:none;border-radius:9px;font-size:.84em;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:3px}
+.proto-card{background:white;border-radius:13px;margin:0 14px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.proto-header{display:flex;align-items:center;gap:11px;padding:13px;cursor:pointer;border-bottom:1px solid transparent;transition:background .15s}
+.proto-header:hover{background:var(--gray-bg)}
+.proto-header.expanded{border-bottom-color:var(--border-soft)}
+.proto-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.7em;font-weight:700;flex-shrink:0}
+.proto-chev{color:var(--text3);font-size:.65em;transition:transform .2s;margin-left:auto}
+.proto-header.expanded .proto-chev{transform:rotate(90deg)}
+.proto-body{display:none;padding:13px}
+.proto-body.show{display:block}
+.proto-prod-item{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--border-soft)}
+.proto-prod-item:last-child{border-bottom:none}
+.ppi-img{width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--border-soft);background:var(--gray-bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ppi-img img{width:100%;height:100%;object-fit:cover}
+.ppi-img-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.55em;color:var(--text3);font-weight:600;text-align:center;padding:2px}
+.ppi-name{flex:1;font-size:.84em;font-weight:500}
+.ppi-dose{font-size:.75em;color:var(--text2);white-space:nowrap}
+.ppi-rm{width:22px;height:22px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:.8em;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ppi-rm:hover{background:var(--red-bg);color:var(--red)}
+.ppi-dose-input{width:72px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-size:.76em;font-family:var(--font)}
+.btn-add-prod-proto{width:100%;padding:8px;border:1px dashed var(--border);border-radius:8px;background:transparent;color:var(--blue);font-size:.8em;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px}
+.btn-add-prod-proto:hover{background:rgba(0,122,255,.05)}
+.picker-overlay{display:none;position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center}
+.picker-overlay.open{display:flex;animation:fadeIn .18s}
+.picker-sheet{background:white;border-radius:22px 22px 0 0;width:100%;max-width:600px;max-height:75vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.4,0,.2,1)}
+.picker-head{padding:16px 16px 11px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-soft)}
+.picker-title{font-size:.95em;font-weight:700}
+.picker-list{overflow-y:auto;flex:1;padding:8px}
+.picker-item{display:flex;align-items:center;gap:11px;padding:10px 9px;border-radius:10px;cursor:pointer;transition:background .15s}
+.picker-item:hover{background:var(--gray-bg)}
+.picker-item-img{width:38px;height:38px;border-radius:8px;border:1px solid var(--border-soft);background:var(--gray-bg);flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.picker-item-img img{width:100%;height:100%;object-fit:cover}
+.picker-item-name{font-size:.88em;font-weight:500}
+.picker-item-cat{font-size:.72em;color:var(--text2)}
+.picker-dose-form{padding:13px;border-top:1px solid var(--border-soft)}
+.picker-dose-row{display:flex;gap:7px}
+/* FAB */
+.fab{position:fixed;bottom:calc(28px + var(--sab));right:22px;width:54px;height:54px;border-radius:27px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));box-shadow:0 4px 16px rgba(0,122,255,.38);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:1.6em;line-height:1;transition:all .2s;z-index:100}
+.fab:hover{transform:translateY(-2px)}.fab:active{transform:scale(.95)}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.48);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal{background:white;border-radius:22px 22px 0 0;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;animation:slideUp .28s cubic-bezier(.4,0,.2,1);padding-bottom:var(--sab)}
+.modal-header{padding:18px 18px 13px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;border-bottom:1px solid var(--border-soft)}
+.modal-title{font-size:1.05em;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:14px;background:var(--gray-bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:var(--gray-bg2)}
+.modal-body{padding:18px}
+.fs-title{font-size:.67em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:16px 0 7px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.form-group{margin-bottom:11px}
+.form-group label{display:block;font-size:.75em;font-weight:500;color:var(--text2);margin-bottom:4px}
+input.fi,select.fi,textarea.fi{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:.88em;font-family:var(--font);color:var(--text);background:white;transition:all .2s;appearance:none}
+input.fi:focus,select.fi:focus,textarea.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,122,255,.1);outline:none}
+textarea.fi{resize:vertical;min-height:75px}
+select.fi{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2386868B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:28px}
+.photo-area{border:2px dashed var(--border);border-radius:11px;padding:18px;text-align:center;cursor:pointer;background:var(--gray-bg);position:relative;transition:all .2s}
+.photo-area:hover{border-color:var(--blue);background:#F0F9FF}
+.photo-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pa-text{font-size:.8em;color:var(--text2)}
+.photo-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.photo-wrap{position:relative;display:inline-block}
+.photo-thumb{width:65px;height:65px;border-radius:9px;object-fit:cover;border:1px solid var(--border-soft)}
+.photo-rm{position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:9px;background:var(--red);color:white;border:1.5px solid white;font-size:.65em;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.result-entry{background:var(--gray-bg);border-radius:9px;padding:11px;margin-bottom:7px}
+.re-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.re-title{font-size:.82em;font-weight:600}
+.btn-rm-r{width:22px;height:22px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:var(--text2);font-size:.85em;display:flex;align-items:center;justify-content:center}
+.btn-rm-r:hover{background:var(--red-bg);color:var(--red)}
+.btn-add-r{width:100%;padding:9px;border:1px dashed var(--border);border-radius:8px;background:transparent;color:var(--blue);font-size:.82em;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;margin-top:7px}
+.btn-add-r:hover{background:rgba(0,122,255,.05)}
+.modal-footer{padding:14px 18px;display:flex;gap:9px;border-top:1px solid var(--border-soft);background:white;position:sticky;bottom:0}
+.btn-primary{flex:1;padding:11px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));color:white;border:none;border-radius:11px;font-size:.92em;font-weight:600;font-family:var(--font);cursor:pointer;box-shadow:0 4px 12px rgba(0,122,255,.28)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-secondary{padding:11px 18px;background:var(--gray-bg2);color:var(--text2);border:none;border-radius:11px;font-size:.92em;font-family:var(--font);cursor:pointer}
+.btn-secondary:hover{background:var(--border)}
+/* DETAIL */
+.detail-overlay{display:none;position:fixed;inset:0;z-index:1500;background:var(--gray-bg);overflow-y:auto}
+.detail-overlay.open{display:block;animation:fadeIn .2s}
+.detail-header{position:sticky;top:0;z-index:10;background:rgba(245,245,247,.9);backdrop-filter:blur(20px);padding:calc(var(--sat) + 11px) 14px 11px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(0,0,0,.06)}
+.btn-back{width:34px;height:34px;border-radius:17px;background:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1em;box-shadow:0 1px 4px rgba(0,0,0,.1);color:var(--blue)}
+.detail-hero{width:100%;height:220px;background:linear-gradient(135deg,#E8F5E9,#C8E6C9);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.detail-hero img{width:100%;height:100%;object-fit:cover}
+.detail-hero-ph{font-size:.75em;color:var(--text3);font-weight:500}
+.hero-nav{position:absolute;bottom:11px;left:0;right:0;display:flex;justify-content:center;gap:5px}
+.hdot{width:5px;height:5px;border-radius:3px;background:rgba(255,255,255,.5);transition:all .2s}
+.hdot.active{background:white;width:16px}
+.detail-body{padding:18px}
+.detail-name{font-size:1.7em;font-weight:800;letter-spacing:-.5px}
+.detail-obt{font-size:.88em;color:var(--text2);margin-bottom:11px}
+.detail-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
+.d-sec{font-size:.68em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin:18px 0 9px}
+.specs-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;background:white;border-radius:11px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.si-label{font-size:.63em;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.si-val{font-size:.9em;font-weight:600}
+.bcard{background:white;border-radius:11px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.bitem{display:flex;align-items:flex-start;gap:7px;padding:5px 0;border-bottom:1px solid var(--border-soft);font-size:.85em}
+.bitem:last-child{border-bottom:none}
+.bdot{color:var(--green);font-size:.75em;flex-shrink:0;margin-top:3px}
+.rcard{background:white;border-radius:11px;padding:13px;margin-bottom:9px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.rcard-title{font-size:.9em;font-weight:600;margin-bottom:3px}
+.rcard-meta{font-size:.76em;color:var(--text2);margin-bottom:7px}
+.rcard-prod{font-size:1.25em;font-weight:700;color:var(--blue)}
+.rcard-obs{font-size:.8em;color:var(--text2);margin-top:5px}
+/* INFO CARDS */
+.info-card{background:white;border-radius:14px;margin:0 14px 11px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.ic-header{padding:14px;display:flex;align-items:center;gap:11px;cursor:pointer;border-bottom:1px solid transparent;transition:all .2s}
+.ic-header:hover{background:var(--gray-bg)}
+.ic-header.expanded{border-bottom-color:var(--border-soft)}
+.ic-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.72em;font-weight:700;flex-shrink:0}
+.ic-title{font-size:.92em;font-weight:600}
+.ic-sub{font-size:.75em;color:var(--text2)}
+.ic-chev{margin-left:auto;color:var(--text3);font-size:.65em;transition:transform .2s}
+.ic-header.expanded .ic-chev{transform:rotate(90deg)}
+.ic-body{display:none;padding:14px}
+.ic-body.show{display:block}
+.pitem{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--border-soft);font-size:.82em}
+.pitem:last-child{border-bottom:none}
+.pcheck{color:var(--green)}
+.pdose{font-size:.78em;color:var(--text2);margin-left:auto}
+/* SECTIONS */
+.cultivo-banner{margin:0 14px 14px;border-radius:14px;padding:22px 18px;color:white;box-shadow:0 4px 16px rgba(0,0,0,.14)}
+.cv-title{font-size:1.5em;font-weight:800;letter-spacing:-.3px}
+.cv-sub{font-size:.84em;opacity:.8;margin-top:3px}
+.cv-badge{display:inline-flex;background:rgba(255,255,255,.14);border-radius:7px;padding:4px 10px;font-size:.76em;font-weight:600;margin-top:11px}
+.benefit-grid{padding:0 14px;display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.bm-card{background:white;border-radius:11px;padding:13px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.bm-title{font-size:.8em;font-weight:600;margin-bottom:2px}
+.bm-text{font-size:.73em;color:var(--text2)}
+.cbadge2{display:inline-flex;align-items:center;justify-content:center;background:var(--blue);color:white;border-radius:9px;font-size:.66em;font-weight:700;min-width:18px;height:18px;padding:0 4px;margin-left:5px}
+.empty{display:flex;flex-direction:column;align-items:center;padding:55px 28px;text-align:center}
+.empty-title{font-size:.95em;font-weight:600;color:var(--text2);margin-bottom:3px}
+.empty-sub{font-size:.82em;color:var(--text3)}
+.toast{position:fixed;bottom:calc(95px + var(--sab));left:50%;transform:translateX(-50%) translateY(16px);background:rgba(28,28,30,.9);color:white;padding:9px 18px;border-radius:18px;font-size:.82em;opacity:0;transition:all .28s;z-index:3000;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:480px){.cards-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.benefit-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>🌱 Calculadora de Sementes de Soja</h1>
-        <p>Comparação técnica e econômica</p>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="nav-logo">Catálogo <span>Sementes</span></div>
+    <button class="nav-menu-btn" onclick="toggleSidebar()"><div class="ham"><span></span><span></span><span></span></div></button>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-section="soja" onclick="switchSection('soja',this)">Soja</button>
+    <button class="nav-tab" data-section="brachiaria" onclick="switchSection('brachiaria',this)">Brachiaria</button>
+    <button class="nav-tab" data-section="tsi" onclick="switchSection('tsi',this)">TSI</button>
+    <button class="nav-tab" data-section="cultivo" onclick="switchSection('cultivo',this)">Cultivo Pro</button>
+    <button class="nav-tab" data-section="cultivo90" onclick="switchSection('cultivo90',this)">Cultivo 90</button>
+  </div>
+</nav>
+
+<div class="sb-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sb-title">Navegação</div>
+  <div class="sb-item active" onclick="switchSection('soja',null);toggleSidebar()">
+    <div class="sb-ico" style="background:#E8F5E9;color:#2E7D32">Soja</div>
+    <div><div class="sb-name">Sementes de Soja</div><div class="sb-sub">Catálogo de cultivares</div></div>
+  </div>
+  <div class="sb-item" onclick="switchSection('brachiaria',null);toggleSidebar()">
+    <div class="sb-ico" style="background:#F1F8E9;color:#33691E">Bra</div>
+    <div><div class="sb-name">Brachiaria SOESP</div><div class="sb-sub">Sementes forrageiras</div></div>
+  </div>
+  <div class="sb-item" onclick="switchSection('tsi',null);toggleSidebar()">
+    <div class="sb-ico" style="background:#E3F2FD;color:#0277BD">TSI</div>
+    <div><div class="sb-name">Tratamento de Semente</div><div class="sb-sub">Protocolos TSI 2024</div></div>
+  </div>
+  <div class="sb-item" onclick="switchSection('cultivo',null);toggleSidebar()">
+    <div class="sb-ico" style="background:#E8F5E9;color:#1B5E20">C.Pro</div>
+    <div><div class="sb-name">Cultivo Pro</div><div class="sb-sub">Programa de garantia</div></div>
+  </div>
+  <div class="sb-item" onclick="switchSection('cultivo90',null);toggleSidebar()">
+    <div class="sb-ico" style="background:#FFF8E1;color:#E65100">C.90</div>
+    <div><div class="sb-name">Cultivo 90</div><div class="sb-sub">Germinação superior</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- SOJA -->
+<div id="section-soja" class="section active">
+  <div class="page-header">
+    <div class="page-title">Sementes de Soja <span class="cbadge2" id="soja-count">0</span></div>
+    <div class="page-sub">Portfólio Safra 2025/2026</div>
+  </div>
+  <div class="section-banner-wrap" id="sbanner-soja"></div>
+  <div class="filters">
+    <div class="f-label">Filtrar por</div>
+    <select class="fsel" id="filter-bio" onchange="applyFilters()">
+      <option value="">Biotecnologia</option>
+      <option>INTACTA2 XTEND</option><option>INTACTA RR2 PRO</option><option>ConkestaE3 Enlist</option><option>Enlist</option>
+    </select>
+    <select class="fsel" id="filter-nema" onchange="applyFilters()">
+      <option value="">Nematoide</option><option value="SIM">Resistente</option><option value="NÃO">Sem resistência</option>
+    </select>
+    <select class="fsel" id="filter-obt" onchange="applyFilters()">
+      <option value="">Obtentora</option>
+      <option>Sementes Goiás</option><option>Minha Empresa</option><option>DonMario</option><option>Brasmax</option>
+      <option>SoyTech</option><option>HO Genética</option><option>Golden Harvest</option><option>TMG</option>
+    </select>
+    <button class="btn-reset" onclick="resetFilters()">Limpar</button>
+  </div>
+  <div class="cards-grid" id="soja-grid"></div>
+  <div class="empty" id="soja-empty" style="display:none">
+    <div class="empty-title">Nenhum cultivar encontrado</div>
+    <div class="empty-sub">Tente outros filtros ou adicione um novo cultivar</div>
+  </div>
+</div>
+
+<!-- BRACHIARIA -->
+<div id="section-brachiaria" class="section">
+  <div class="page-header">
+    <div class="page-title">Brachiaria SOESP</div>
+    <div class="page-sub">Tecnologia Advanced em Pastagem</div>
+  </div>
+  <div class="section-banner-wrap" id="sbanner-brachiaria"></div>
+  <div style="margin:0 14px 14px;background:linear-gradient(135deg,#33691E,#558B2F);border-radius:14px;padding:22px;color:white">
+    <div style="font-size:1.3em;font-weight:800">SOESP Advanced</div>
+    <div style="font-size:.82em;opacity:.8;margin-top:3px">Tecnologia exclusiva desde 2011</div>
+    <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px">
+      <span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:.72em">Alta pureza ~98%</span>
+      <span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:.72em">Ideal para ILPF</span>
+      <span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:.72em">Fórmula exclusiva</span>
     </div>
-
-    <!-- Configurações Globais -->
-    <div class="global-config">
-        <h3>Configurações Globais</h3>
-        <div class="global-row">
-            <div class="input-group">
-                <label>Preço Saca Soja (R$)</label>
-                <input type="number" id="precoSacaSoja" value="120" step="0.01" min="0">
-            </div>
-            <div class="input-group">
-                <label>Hectares Totais (conferência)</label>
-                <input type="number" id="hectaresTotal" value="0" step="1" min="0" readonly style="background: #F5F5F7; color: #86868B;">
-            </div>
-        </div>
+  </div>
+  <div class="cards-grid" id="brachiaria-grid"></div>
+  <div class="info-card">
+    <div class="ic-header" onclick="toggleIC(this)">
+      <div class="ic-ico" style="background:#F1F8E9;color:#33691E">Comp</div>
+      <div><div class="ic-title">Tratamento SOESP Advanced</div><div class="ic-sub">Composição e fórmula</div></div>
+      <div class="ic-chev">&#9658;</div>
     </div>
-
-    <div class="main-layout">
-        <!-- Coluna Esquerda: Sementes -->
-        <div class="left-column">
-            <!-- Botão Adicionar Semente -->
-            <button class="btn-add-seed" onclick="addSeed()">+ Adicionar Semente</button>
-
-            <!-- Container de Sementes -->
-            <div id="seedsContainer"></div>
-        </div>
-
-        <!-- Coluna Direita: Comparativo -->
-        <div class="right-column">
-            <!-- Resultados -->
-            <div class="results-card" id="resultsCard" style="display: none;">
-                <h3>📊 Comparativo Final</h3>
-                <div style="overflow-x: auto;">
-                    <table class="results-table" id="resultsTable">
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <div class="ic-body">
+      <div class="pitem"><span class="pcheck">&#10003;</span><span>Organominerais</span></div>
+      <div class="pitem"><span class="pcheck">&#10003;</span><span>Carboxina</span><span class="pdose">88 g/100 kg</span></div>
+      <div class="pitem"><span class="pcheck">&#10003;</span><span>Tiram</span><span class="pdose">88 g/100 kg</span></div>
+      <div class="pitem"><span class="pcheck">&#10003;</span><span>Fipronil</span><span class="pdose">10 g/100 kg</span></div>
+      <div class="pitem"><span class="pcheck">&#10003;</span><span>Incrustante Alcobering&#174;</span></div>
+      <div style="margin-top:9px;font-size:.78em;color:var(--text2)">Proporção: 1,1 kg/kg (Brachiaria) · 1,5 kg/kg (Panicum)</div>
     </div>
-
-    <!-- Modal TS -->
-    <div class="modal-overlay" id="tsModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Tratamento de Sementes</h3>
-                <button class="btn-close" onclick="closeTSModal()">×</button>
-            </div>
-
-            <div class="input-group">
-                <label>Nome do Tratamento</label>
-                <input type="text" id="tsName" placeholder="Ex: Standak Top + Enraizador" style="max-width: 100%;">
-            </div>
-
-            <hr style="margin: 20px 0; border: none; border-top: 1px solid #E5E5E7;">
-
-            <button class="btn-add-product" onclick="addProduct()">+ Adicionar Produto</button>
-
-            <div id="productsContainer"></div>
-
-            <div class="ts-summary">
-                <div class="ts-summary-label">Custo Total do TS</div>
-                <div class="ts-summary-value" id="tsTotalCost">R$ 0,00/ha</div>
-                <button class="btn-save-ts" onclick="saveTSModal()">Salvar e Fechar</button>
-            </div>
-        </div>
+  </div>
+  <div class="info-card">
+    <div class="ic-header" onclick="toggleIC(this)">
+      <div class="ic-ico" style="background:#FFF8E1;color:#F57F17">Ben</div>
+      <div><div class="ic-title">Benefícios da Tecnologia</div><div class="ic-sub">Por que escolher SOESP Advanced</div></div>
+      <div class="ic-chev">&#9658;</div>
     </div>
+    <div class="ic-body">
+      <div class="bitem"><span class="bdot">&#9679;</span>Alta pureza — sementes uniformes ~98%</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Tratamento que não se rompe no plantio</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Compatível com plantio a lanço, em linha, vácuo ou aéreo</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Ideal para ILPF e plantio consorciado com milho</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Germinação apenas com condições favoráveis — resiste ao veranico</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Livre de nematoides e pragas</div>
+    </div>
+  </div>
+</div>
 
-    <!-- Botão Flutuante Print -->
-    <button class="fab-print" onclick="window.print()" title="Imprimir">🖨️</button>
+<!-- TSI -->
+<div id="section-tsi" class="section">
+  <div class="page-header">
+    <div class="page-title">Tratamento de Sementes</div>
+    <div class="page-sub">Protocolos TSI 2024 — GO, TO, MS Norte</div>
+  </div>
+  <div class="section-banner-wrap" id="sbanner-tsi"></div>
+  <!-- Tabs: Protocolos / Produtos -->
+  <div class="tsi-tabs">
+    <button class="tsi-tab active" onclick="switchTsiTab('protocolos',this)">Protocolos</button>
+    <button class="tsi-tab" onclick="switchTsiTab('produtos',this)">Produtos</button>
+  </div>
+  <!-- Protocolos -->
+  <div id="tsi-protocolos"></div>
+  <!-- Produtos -->
+  <div id="tsi-produtos" style="display:none"></div>
+</div>
 
-    <script>
-        let seeds = [];
-        let currentSeedIndex = null;
+<!-- CULTIVO PRO -->
+<div id="section-cultivo" class="section">
+  <div class="page-header">
+    <div class="page-title">Cultivo Pro</div>
+    <div class="page-sub">Programa de Garantia — Sementes Goiás</div>
+  </div>
+  <div class="section-banner-wrap" id="sbanner-cultivo"></div>
+  <div class="cultivo-banner" style="background:linear-gradient(135deg,#1B5E20,#2E7D32)">
+    <div class="cv-title">CULTIVO PRO</div>
+    <div class="cv-sub">Proteção à altura que sua lavoura merece</div>
+    <div class="cv-badge">Segurança para plantar. Confiança para colher.</div>
+  </div>
+  <div style="padding:0 14px 10px;font-size:.68em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">Benefícios do Programa</div>
+  <div class="benefit-grid">
+    <div class="bm-card"><div class="bm-title">Vigor &#8805; 90%</div><div class="bm-text">Germinação mínima de 95% garantida</div></div>
+    <div class="bm-card"><div class="bm-title">Reposição</div><div class="bm-text">Sementes em caso de replantio necessário</div></div>
+    <div class="bm-card"><div class="bm-title">Visita Técnica</div><div class="bm-text">Em até 48h após comunicação</div></div>
+    <div class="bm-card"><div class="bm-title">Bônus R$ 500/ha</div><div class="bm-text">Voucher válido por 1 ano</div></div>
+  </div>
+  <div class="info-card">
+    <div class="ic-header" onclick="toggleIC(this)">
+      <div class="ic-ico" style="background:#E8F5E9;color:#1B5E20">Cob</div>
+      <div><div class="ic-title">Situações Cobertas</div><div class="ic-sub">Quando acionar o programa</div></div>
+      <div class="ic-chev">&#9658;</div>
+    </div>
+    <div class="ic-body">
+      <div class="bitem"><span class="bdot">&#9679;</span>Veranicos intensos (falta de chuvas)</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Ataques de pragas e doenças na fase inicial</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Chuvas intensas que comprometam a emergência</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Outros imprevistos não previsíveis</div>
+    </div>
+  </div>
+  <div class="info-card">
+    <div class="ic-header" onclick="toggleIC(this)">
+      <div class="ic-ico" style="background:#FFF8E1;color:#E65100">Eta</div>
+      <div><div class="ic-title">Como Funciona</div><div class="ic-sub">Etapas do programa</div></div>
+      <div class="ic-chev">&#9658;</div>
+    </div>
+    <div class="ic-body">
+      <div class="bitem"><span style="color:var(--blue);font-weight:700;min-width:18px;font-size:.85em">1.</span>Compra sementes com vigor &#8805; 90% e germinação &#8805; 95%</div>
+      <div class="bitem"><span style="color:var(--blue);font-weight:700;min-width:18px;font-size:.85em">2.</span>Comunicação da necessidade de replantio nos prazos</div>
+      <div class="bitem"><span style="color:var(--blue);font-weight:700;min-width:18px;font-size:.85em">3.</span>Visita técnica Sementes Goiás em até 48h</div>
+      <div class="bitem"><span style="color:var(--blue);font-weight:700;min-width:18px;font-size:.85em">4.</span>Reposição com tratamento e frete CIF</div>
+      <div class="bitem"><span style="color:var(--blue);font-weight:700;min-width:18px;font-size:.85em">5.</span>Voucher R$ 500/ha para próxima safra</div>
+    </div>
+  </div>
+  <div class="info-card">
+    <div class="ic-header" onclick="toggleIC(this)">
+      <div class="ic-ico" style="background:#FFEBEE;color:#C62828">Exc</div>
+      <div><div class="ic-title">Exclusões do Programa</div><div class="ic-sub">O que não é coberto</div></div>
+      <div class="ic-chev">&#9658;</div>
+    </div>
+    <div class="ic-body">
+      <div class="bitem"><span style="color:var(--red)">&#10005;</span>Catástrofes naturais de grande escala</div>
+      <div class="bitem"><span style="color:var(--red)">&#10005;</span>Novas pragas fora do controle da empresa</div>
+      <div class="bitem"><span style="color:var(--red)">&#10005;</span>Problemas não relacionados à qualidade da semente</div>
+      <div class="bitem"><span style="color:var(--red)">&#10005;</span>Áreas não informadas e aprovadas via protocolo</div>
+    </div>
+  </div>
+</div>
 
-        // Load from localStorage
-        window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('seedsData');
-            if (saved) {
-                seeds = JSON.parse(saved);
-                renderSeeds();
-            }
+<!-- CULTIVO 90 -->
+<div id="section-cultivo90" class="section">
+  <div class="page-header">
+    <div class="page-title">Cultivo 90</div>
+    <div class="page-sub">Germinação e Vigor Garantidos — Sementes Goiás</div>
+  </div>
+  <div class="section-banner-wrap" id="sbanner-cultivo90"></div>
+  <div class="cultivo-banner" style="background:linear-gradient(135deg,#E65100,#BF360C)">
+    <div class="cv-title">CULTIVO 90</div>
+    <div class="cv-sub">A confiança que sua lavoura merece</div>
+    <div class="cv-badge">Mais segura para plantar. Mais tranquilidade para colher.</div>
+  </div>
+  <div class="benefit-grid">
+    <div class="bm-card" style="background:var(--green-bg)">
+      <div style="font-size:1.5em;font-weight:800;color:#2E7D32">&#8805; 90%</div>
+      <div class="bm-title" style="color:#2E7D32">Germinação e Vigor</div>
+      <div class="bm-text">Padrão acima do exigido pelo mercado</div>
+    </div>
+    <div class="bm-card" style="background:rgba(0,122,255,.06)">
+      <div style="font-size:1.1em;font-weight:700;color:var(--blue)">Padrão Superior</div>
+      <div class="bm-title">Segurança no plantio</div>
+      <div class="bm-text">Estande inicial garantido</div>
+    </div>
+  </div>
+  <div class="info-card">
+    <div class="ic-header expanded" onclick="toggleIC(this)">
+      <div class="ic-ico" style="background:#FFF8E1;color:#E65100">C90</div>
+      <div><div class="ic-title">Benefícios do Cultivo 90</div><div class="ic-sub">Vantagens sobre o padrão de mercado</div></div>
+      <div class="ic-chev">&#9658;</div>
+    </div>
+    <div class="ic-body show">
+      <div class="bitem"><span class="bdot">&#9679;</span>Germinação e vigor garantidos &#8805; 90%</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Menor risco no estande inicial</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Mais uniformidade, mais produtividade</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Lavoura começa forte desde o primeiro momento</div>
+      <div class="bitem"><span class="bdot">&#9679;</span>Escolha ideal para quem busca segurança no estabelecimento</div>
+    </div>
+  </div>
+  <div style="margin:11px 14px 20px;background:white;border-radius:14px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <div style="font-size:.95em;font-weight:600;margin-bottom:8px">Sementes Goiás com Garantia Superior</div>
+    <div style="font-size:.82em;color:var(--text2);line-height:1.55">As sementes Cultivo 90 oferecem um padrão acima do exigido pelo mercado, com germinação e vigor mínimos de 90%. É a escolha ideal para quem busca segurança no estabelecimento da lavoura, mais confiabilidade e resultados consistentes.</div>
+    <div style="margin-top:12px;font-size:.78em;color:var(--blue)">www.sementesgoias.com.br</div>
+  </div>
+</div>
 
-            // Load global configs
-            const precoSaca = localStorage.getItem('precoSacaSoja');
-            if (precoSaca) document.getElementById('precoSacaSoja').value = precoSaca;
-        });
+</div><!-- end .main -->
 
-        // Save to localStorage
-        function saveData() {
-            localStorage.setItem('seedsData', JSON.stringify(seeds));
-            localStorage.setItem('precoSacaSoja', document.getElementById('precoSacaSoja').value);
-        }
+<button class="fab" id="fab-btn" onclick="openAddModal()">+</button>
 
-        // Auto-save on input change
-        document.addEventListener('input', (e) => {
-            if (e.target.id === 'precoSacaSoja') {
-                saveData();
-                calculateResults();
-            }
-        });
+<!-- MODAL SOJA -->
+<div class="modal-overlay" id="soja-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Novo Cultivar de Soja</div>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="fs-title">Identificação</div>
+      <div class="form-group"><label>Nome do Cultivar *</label><input class="fi" id="f-nome" placeholder="Ex: DM 70IX70 I2X, BMX Raptor..." maxlength="60"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Obtentora</label>
+          <select class="fi" id="f-obtentora">
+            <option value="">Selecionar...</option>
+            <option>Sementes Goiás</option><option>Minha Empresa</option><option>DonMario</option>
+            <option>Brasmax</option><option>SoyTech</option><option>HO Genética</option>
+            <option>Golden Harvest</option><option>TMG</option><option>Outra</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+          <select class="fi" id="f-status"><option value="">Padrão</option><option value="LANÇAMENTO">Lançamento</option><option value="DESTAQUE">Destaque</option></select>
+        </div>
+      </div>
+      <div class="fs-title">Características</div>
+      <div class="form-row">
+        <div class="form-group"><label>Grupo de Maturação</label><input class="fi" id="f-gm" type="number" step="0.1" min="5" max="9" placeholder="Ex: 7.2"></div>
+        <div class="form-group"><label>Ciclo (dias)</label><input class="fi" id="f-ciclo" type="text" maxlength="12" placeholder="Ex: 104 a 115"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>PMG (g)</label><input class="fi" id="f-pmg" type="number" max="9999999" placeholder="Ex: 198"></div>
+        <div class="form-group"><label>Cor da Flor</label><select class="fi" id="f-flor"><option value="Roxa">Roxa</option><option value="Branca">Branca</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Biotecnologia</label>
+          <select class="fi" id="f-bio"><option value="">Sem biotecnologia</option><option>INTACTA2 XTEND</option><option>INTACTA RR2 PRO</option><option>ConkestaE3 Enlist</option><option>Enlist</option></select>
+        </div>
+        <div class="form-group"><label>Resist. Nematoide</label><select class="fi" id="f-nema"><option value="SIM">Sim</option><option value="NÃO">Não</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Exig. Fertilidade</label>
+          <select class="fi" id="f-fert"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>3 a 5</option><option>4 e 5</option><option>3, 4 e 5</option></select>
+        </div>
+        <div class="form-group"><label>Época de Plantio</label><input class="fi" id="f-epoca" type="text" placeholder="Ex: 1º/OUT A 1º/DEZ"></div>
+      </div>
+      <div class="form-group"><label>População de Plantas</label><input class="fi" id="f-pop" type="text" placeholder="Ex: 220 a 320 mil plantas/ha"></div>
+      <div class="fs-title">Benefícios</div>
+      <div class="form-group"><textarea class="fi" id="f-beneficios" rows="4" placeholder="Um benefício por linha."></textarea></div>
+      <div class="fs-title">Fotos</div>
+      <div class="photo-area"><input type="file" accept="image/*" multiple onchange="handlePhotos(event)"><div class="pa-text">Toque para adicionar fotos</div></div>
+      <div class="photo-list" id="photo-preview"></div>
+      <div class="fs-title">Resultados de Campo</div>
+      <div id="results-container"></div>
+      <button class="btn-add-r" onclick="addResultEntry()">+ Adicionar Resultado</button>
+      <div class="form-group" style="margin-top:14px"><label>Observações</label><textarea class="fi" id="f-obs" rows="3" placeholder="Notas, regiões adaptadas..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveCultivar()">Salvar Cultivar</button>
+    </div>
+  </div>
+</div>
 
-        function addSeed() {
-            const seed = {
-                id: Date.now(),
-                type: seeds.length === 0 ? 'mine' : 'competitor',
-                name: '',
-                mode: 'plants', // plants ou seeds
-                population: 260000,
-                germination: 90,
-                spacing: 50,
-                priceBag: 450,
-                hectares: 100, // Hectares individuais por cultivar
-                hasTS: false,
-                ts: {
-                    name: '',
-                    products: []
-                }
-            };
-            seeds.push(seed);
-            saveData();
-            renderSeeds();
-        }
+<!-- MODAL BRACHIARIA -->
+<div class="modal-overlay" id="brachiaria-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nova Brachiaria</div>
+      <button class="modal-close" onclick="closeBrachiariaModal()">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Espécie / Nome</label>
+        <select class="fi" id="b-especie">
+          <option>Brachiaria brizantha cv. Marandu</option><option>Brachiaria brizantha cv. Xaraés</option>
+          <option>Brachiaria brizantha cv. BRS Piatã</option><option>Brachiaria decumbens</option>
+          <option>Brachiaria ruziziensis</option><option>Panicum maximum cv. Mombaça</option>
+          <option>Panicum maximum cv. Tanzânia</option><option>Outra</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Tratamento</label><select class="fi" id="b-trat"><option>SOESP Advanced</option><option>Padrão</option><option>Nua</option></select></div>
+        <div class="form-group"><label>Pureza (%)</label><input class="fi" id="b-pureza" type="number" max="100" placeholder="98"></div>
+      </div>
+      <div class="form-group"><label>VC (%)</label><input class="fi" id="b-vc" type="number" max="100" placeholder="Valor Cultural"></div>
+      <div class="fs-title">Fotos</div>
+      <div class="photo-area"><input type="file" accept="image/*" multiple onchange="handleBrachiariaPhotos(event)"><div class="pa-text">Adicionar fotos</div></div>
+      <div class="photo-list" id="b-photo-preview"></div>
+      <div class="fs-title">Observações</div>
+      <textarea class="fi" id="b-obs" rows="3" placeholder="Resultados regionais..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeBrachiariaModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveBrachiaria()">Salvar</button>
+    </div>
+  </div>
+</div>
 
-        function removeSeed(id) {
-            seeds = seeds.filter(s => s.id !== id);
-            saveData();
-            renderSeeds();
-        }
+<!-- DETAIL -->
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-header">
+    <button class="btn-back" onclick="closeDetail()">&#8249;</button>
+    <div style="font-weight:600;font-size:.88em" id="detail-header-name"></div>
+  </div>
+  <div id="detail-content"></div>
+</div>
 
-        function renderSeeds() {
-            const container = document.getElementById('seedsContainer');
-            container.innerHTML = '';
+<!-- PRODUCT PICKER -->
+<div class="picker-overlay" id="picker-overlay">
+  <div class="picker-sheet">
+    <div class="picker-head">
+      <div class="picker-title" id="picker-title">Selecionar Produto</div>
+      <button class="modal-close" onclick="closePicker()">&#10005;</button>
+    </div>
+    <div class="picker-list" id="picker-list"></div>
+    <div class="picker-dose-form" id="picker-dose-form" style="display:none">
+      <div class="picker-selected-name" id="picker-sel-name"></div>
+      <div class="picker-dose-row">
+        <input class="fi" id="picker-dose-val" placeholder="Ex: 200 ml / 100 g" style="flex:1">
+        <button class="btn-primary" style="flex:none;padding:9px 16px" onclick="confirmPickerProduct()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-            seeds.forEach((seed, index) => {
-                const card = document.createElement('div');
-                card.className = 'seed-card';
-                card.innerHTML = `
-                    <div class="seed-header">
-                        <span class="seed-badge ${seed.type}">
-                            ${seed.type === 'mine' ? '🟢 Minha Oferta' : '🔴 Concorrente'}
-                        </span>
-                        <button class="btn-remove" onclick="removeSeed(${seed.id})">×</button>
-                    </div>
+<div class="toast" id="toast"></div>
 
-                    <div class="input-group full-width" style="margin-bottom: 16px;">
-                        <label>Nome da Cultivar</label>
-                        <input type="text" value="${seed.name}" 
-                            onchange="updateSeed(${index}, 'name', this.value)" style="max-width: 100%;">
-                    </div>
+<script>
+var sojaData=JSON.parse(localStorage.getItem('soja-data')||'[]');
+var brachiariaData=JSON.parse(localStorage.getItem('brachiaria-data')||'[]');
+var currentPhotos=[];
+var currentBrachiariaPhotos=[];
+var currentSection='soja';
+var resultCount=0;
 
-                    <div class="toggle-group" style="margin-bottom: 16px;">
-                        <button class="toggle-option ${seed.mode === 'plants' ? 'active' : ''}"
-                            onclick="updateSeed(${index}, 'mode', 'plants')">
-                            Plantas/ha
-                        </button>
-                        <button class="toggle-option ${seed.mode === 'seeds' ? 'active' : ''}"
-                            onclick="updateSeed(${index}, 'mode', 'seeds')">
-                            Sementes/ha
-                        </button>
-                    </div>
+var seedData=[
+  {id:'s-01',nome:'DM 70IX70 I2X RSF',obtentora:'DonMario',gm:'7.0',ciclo:'102 a 105',pmg:172,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'5/OUT a 25/NOV',pop:'220 a 320 mil pl/ha',status:'LANÇAMENTO',beneficios:['Alto potencial produtivo.','Resistente ao nematoide de cisto R3, MR 6, 9, 10, 14, 14+.','Resistente ao cancro da haste e à pústula bacteriana.','Precocidade.','Tolerante a sulfonilureias (STS).'],fotos:[],resultados:[],obs:''},
+  {id:'s-02',nome:'DM 72IX74 I2X',obtentora:'DonMario',gm:'7.2',ciclo:'104 a 115',pmg:198,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'5/OUT a 1/DEZ',pop:'220 a 320 mil pl/ha',status:'DESTAQUE',beneficios:['Alto potencial produtivo.','Estabilidade produtiva.','Resistente ao nematoide de cisto R3, MR 6, 9, 10, 14, 14+.','Resistente ao cancro da haste e à pústula bacteriana.'],fotos:[],resultados:[],obs:''},
+  {id:'s-03',nome:'DM 73I75 RSF IPRO',obtentora:'DonMario',gm:'7.3',ciclo:'108 a 112',pmg:180,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'4 e 5',epoca:'1/OUT a 15/NOV',pop:'220 a 280 mil pl/ha',status:'LANÇAMENTO',beneficios:['Alto teto produtivo.','Bom potencial de ramificação.','Arquitetura moderna.','Sanidade radicular e excelente arranque inicial.','MR à raça 3 do nematoide de cisto.'],fotos:[],resultados:[],obs:''},
+  {id:'s-04',nome:'DM 73 RSF IPRO (Ampla)',obtentora:'DonMario',gm:'7.3',ciclo:'103 a 114',pmg:189,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'5',epoca:'1/OUT a 1/DEZ',pop:'250 a 320 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Estabilidade produtiva.','Ampla adaptação.','Resistente ao nematoide de cisto R3 e MR 6, 9, 10, 14 e 14+.','Resistente ao cancro da haste e à pústula bacteriana.','Excelente adaptação para abertura de semeadura.'],fotos:[],resultados:[],obs:''},
+  {id:'s-05',nome:'DM 78IX80 I2X',obtentora:'DonMario',gm:'7.8',ciclo:'108 a 118',pmg:173,flor:'Branca',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'5/OUT a 1/DEZ',pop:'160 a 260 mil pl/ha',status:'DESTAQUE',beneficios:['Alto potencial produtivo.','Boa arquitetura de planta.','Resistente ao nematoide de cisto R3, MR 6, 9, 10, 14, 14+.','Resistente ao cancro da haste e moderadamente resistente à pústula bacteriana.'],fotos:[],resultados:[],obs:''},
+  {id:'s-06',nome:'DM 79K80 CE',obtentora:'DonMario',gm:'7.9',ciclo:'114 a 124',pmg:173,flor:'Branca',bio:'ConkestaE3 Enlist',nema:'NÃO',fert:'4 e 5',epoca:'1/OUT a 1/DEZ',pop:'160 a 260 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Boa arquitetura de planta.','Resistente ao cancro da haste, à mancha olho-de-rã e à pústula bacteriana.'],fotos:[],resultados:[],obs:''},
+  {id:'s-07',nome:'DM 79I81 RSF IPRO',obtentora:'DonMario',gm:'7.9',ciclo:'110 a 121',pmg:190,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'3',epoca:'1/OUT a 20/NOV',pop:'180 a 250 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Ampla região de adaptação.','Estabilidade produtiva.','Excelente desenvolvimento inicial.'],fotos:[],resultados:[],obs:''},
+  {id:'s-08',nome:'DM 82I78 RSF IPRO',obtentora:'DonMario',gm:'8.2',ciclo:'121 a 129',pmg:186,flor:'Branca',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'3',epoca:'10/OUT a 1/DEZ',pop:'180 a 250 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Excelente potencial para solos de média e alta fertilidade.','Ampla adaptação.','Resistente ao cancro da haste, à mancha olho-de-rã e à pústula bacteriana.'],fotos:[],resultados:[],obs:''},
+  {id:'s-09',nome:'BMX Sparta I2X',obtentora:'Brasmax',gm:'6.4',ciclo:'105',pmg:170,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'1/OUT a 1/DEZ',pop:'360 a 400 mil pl/ha',status:'',beneficios:['Superprecocidade.','Resistente ao acamamento.','Excelente sanidade.','Moderadamente resistente ao nematoide-das-galhas (M. javanica).'],fotos:[],resultados:[],obs:''},
+  {id:'s-10',nome:'BMX Raptor I2X',obtentora:'Brasmax',gm:'7.1',ciclo:'103 a 106',pmg:172,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'5/OUT a 25/NOV',pop:'220 a 320 mil pl/ha',status:'LANÇAMENTO',beneficios:['Alto potencial produtivo.','Resistente ao nematoide de cisto R3 e MR 6, 9, 10, 14 e 14+.','Precocidade.','Tolerante a sulfonilureias (STS).'],fotos:[],resultados:[],obs:''},
+  {id:'s-11',nome:'BMX Mítica CE',obtentora:'Brasmax',gm:'7.3',ciclo:'108 a 114',pmg:172,flor:'Roxa',bio:'ConkestaE3 Enlist',nema:'SIM',fert:'5',epoca:'10/OUT a 1/NOV',pop:'220 a 350 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Resistente ao nematoide de cisto R3 e MR 6, 9, 10, 14 e 14+.','Porte e ciclos adequados ao Cerrado.','Tolerante a sulfonilureias (STS).'],fotos:[],resultados:[],obs:''},
+  {id:'s-12',nome:'BMX Bônus IPRO',obtentora:'Brasmax',gm:'7.7',ciclo:'115 a 118',pmg:180,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'5',epoca:'1/OUT a 10/DEZ',pop:'220 a 240 mil pl/ha',status:'',beneficios:['Ampla resistência ao nematoide de cisto R3 e MR 6, 9, 10 e 14.','Moderadamente resistente ao nematoide-das-galhas.','Alto potencial produtivo.'],fotos:[],resultados:[],obs:''},
+  {id:'s-13',nome:'BMX Guepardo IPRO',obtentora:'Brasmax',gm:'7.7',ciclo:'117',pmg:164,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'5',epoca:'5/OUT a 25/NOV',pop:'250 a 320 mil pl/ha',status:'LANÇAMENTO',beneficios:['Alto potencial produtivo.','Boa arquitetura de planta.','Ideal para ambientes de alta tecnologia.','Resistente ao nematoide de cisto R3, MR 6, 9, 10, 14 e 14+.','Resistente ao cancro da haste e à pústula bacteriana.'],fotos:[],resultados:[],obs:''},
+  {id:'s-14',nome:'BMX Domínio IPRO',obtentora:'Brasmax',gm:'8.4',ciclo:'122',pmg:181,flor:'Branca',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'3',epoca:'20/OUT a 1/DEZ',pop:'180 a 220 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Porte e ciclos adequados ao Cerrado.','Excelente potencial em solos de média e alta fertilidade.','Ampla adaptação.'],fotos:[],resultados:[],obs:''},
+  {id:'s-15',nome:'BMX Olimpo IPRO',obtentora:'Brasmax',gm:'7.8',ciclo:'112 a 122',pmg:171,flor:'Branca',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'4',epoca:'1/OUT a 1/DEZ',pop:'160 a 260 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Estabilidade produtiva.','Boa arquitetura de planta.','Ampla região de adaptação.','Resistente ao cancro da haste, à pústula bacteriana e à mancha olho-de-rã.'],fotos:[],resultados:[],obs:''},
+  {id:'s-16',nome:'BMX Tormenta CE',obtentora:'Brasmax',gm:'8.4',ciclo:'118 a 125',pmg:200,flor:'Branca',bio:'ConkestaE3 Enlist',nema:'SIM',fert:'3 a 5',epoca:'20/OUT a 1/DEZ',pop:'300 a 320 mil pl/ha',status:'',beneficios:['Resistente ao nematoide-das-galhas.','Resistente ao acamamento.','Excelente sanidade foliar.'],fotos:[],resultados:[],obs:''},
+  {id:'s-17',nome:'GH 2473 I2X',obtentora:'Golden Harvest',gm:'7.3',ciclo:'108 a 112',pmg:180,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'4 e 5',epoca:'1/OUT a 15/NOV',pop:'220 a 280 mil pl/ha',status:'LANÇAMENTO',beneficios:['Alto teto produtivo.','Bom potencial de ramificação.','Arquitetura moderna.','Sanidade radicular e excelente arranque inicial.','MR à raça 3 do nematoide de cisto.'],fotos:[],resultados:[],obs:''},
+  {id:'s-18',nome:'GH 2275 I2X',obtentora:'Golden Harvest',gm:'7.6',ciclo:'115 a 127',pmg:200,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'3, 4 e 5',epoca:'20/SET a 30/NOV',pop:'240 a 320 mil pl/ha',status:'DESTAQUE',beneficios:['Alto potencial produtivo.','Bom engalhamento e sistema radicular agressivo.','Boa performance na abertura de semeadura.','Multirresistente ao nematoide de cisto R3, MR 6 e 14 e ao cancro da haste.'],fotos:[],resultados:[],obs:''},
+  {id:'s-19',nome:'ST 711 I2X',obtentora:'SoyTech',gm:'7.1',ciclo:'106',pmg:172,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'1/OUT a 20/NOV',pop:'270 a 310 mil pl/ha',status:'DESTAQUE',beneficios:['Ampla adaptação geográfica.','Tolerante ao acamamento.','Multirresistente ao nematoide de cisto R3, MR 9, 10 e 14.','Resistente ao cancro da haste e à mancha olho-de-rã.'],fotos:[],resultados:[],obs:''},
+  {id:'s-20',nome:'HO Guapó I2X',obtentora:'HO Genética',gm:'7.7',ciclo:'115 a 118',pmg:180,flor:'Roxa',bio:'INTACTA2 XTEND',nema:'SIM',fert:'5',epoca:'1/OUT a 10/DEZ',pop:'220 a 240 mil pl/ha',status:'',beneficios:['Ampla resistência ao nematoide de cisto R3 e MR 6, 9, 10 e 14.','Moderadamente resistente ao nematoide-das-galhas.','Alto potencial produtivo.'],fotos:[],resultados:[],obs:''},
+  {id:'s-21',nome:'HO Iguaçú IPRO',obtentora:'HO Genética',gm:'7.7',ciclo:'118',pmg:163,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'5',epoca:'5/OUT a 30/NOV',pop:'220 a 320 mil pl/ha',status:'LANÇAMENTO',beneficios:['Alto potencial produtivo.','Boa arquitetura de planta.','Ideal para ambientes de alta tecnologia.','Resistente ao nematoide de cisto R3 e MR 6, 9, 10, 14 e 14+.'],fotos:[],resultados:[],obs:''},
+  {id:'s-22',nome:'HO Juruena IPRO',obtentora:'HO Genética',gm:'8.0',ciclo:'116',pmg:183,flor:'Branca',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'4',epoca:'20/OUT a 10/NOV',pop:'180 a 260 mil pl/ha',status:'DESTAQUE',beneficios:['Alto potencial produtivo.','Resistente ao nematoide de cisto R3 e MR 14.','Ideal para ambientes de alta tecnologia.'],fotos:[],resultados:[],obs:''},
+  {id:'s-23',nome:'SG 6.7 IPRO',obtentora:'Sementes Goiás',gm:'6.7',ciclo:'99 a 104',pmg:190,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'SIM',fert:'5',epoca:'1/OUT a 20/NOV',pop:'250 a 350 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Superprecocidade.','Viabiliza antecipação de semeadura visando a 2ª safra.','Elevado PMG.','Resistente ao nematoide de cisto R3 e MR 6, 9, 10, 14 e 14+.','Tolerante a sulfonilureias (STS).'],fotos:[],resultados:[],obs:''},
+  {id:'s-24',nome:'SG 7.9 IPRO',obtentora:'Sementes Goiás',gm:'7.9',ciclo:'110 a 121',pmg:190,flor:'Roxa',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'3',epoca:'1/OUT a 20/NOV',pop:'180 a 250 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Ampla região de adaptação.','Estabilidade produtiva.','Excelente desenvolvimento inicial.'],fotos:[],resultados:[],obs:''},
+  {id:'s-25',nome:'SG 8.4 I2X',obtentora:'Sementes Goiás',gm:'8.4',ciclo:'118 a 125',pmg:200,flor:'Branca',bio:'INTACTA2 XTEND',nema:'SIM',fert:'3 a 5',epoca:'20/OUT a 1/DEZ',pop:'300 a 320 mil pl/ha',status:'',beneficios:['Resistente ao nematoide-das-galhas.','Resistente ao acamamento.','Excelente sanidade foliar.'],fotos:[],resultados:[],obs:''},
+  {id:'s-26',nome:'SG 8.4 IPRO',obtentora:'Sementes Goiás',gm:'8.4',ciclo:'122',pmg:181,flor:'Branca',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'3',epoca:'20/OUT a 1/DEZ',pop:'180 a 220 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Porte e ciclos adequados ao Cerrado.','Excelente potencial em solos de média e alta fertilidade.','Ampla adaptação.'],fotos:[],resultados:[],obs:''},
+  {id:'s-27',nome:'SG E3 7.8/7.9',obtentora:'Sementes Goiás',gm:'7.8',ciclo:'114 a 124',pmg:173,flor:'Branca',bio:'ConkestaE3 Enlist',nema:'NÃO',fert:'4 e 5',epoca:'1/OUT a 1/DEZ',pop:'160 a 260 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Boa arquitetura de planta.','Resistente ao cancro da haste, à mancha olho-de-rã e à pústula bacteriana.'],fotos:[],resultados:[],obs:''},
+  {id:'s-28',nome:'SG IPRO 7.8/8.0',obtentora:'Sementes Goiás',gm:'7.8',ciclo:'112 a 122',pmg:171,flor:'Branca',bio:'INTACTA RR2 PRO',nema:'NÃO',fert:'4',epoca:'1/OUT a 1/DEZ',pop:'160 a 260 mil pl/ha',status:'',beneficios:['Alto potencial produtivo.','Estabilidade produtiva.','Boa arquitetura de planta.','Ampla região de adaptação e excelente desenvolvimento inicial.','Resistente ao cancro da haste, à pústula bacteriana e à mancha olho-de-rã.'],fotos:[],resultados:[],obs:''}
+];
 
-                    <div class="seed-inputs-grid">
-                        <div class="input-group">
-                            <label>${seed.mode === 'plants' ? 'População (plantas/ha)' : 'Sementes/ha'}</label>
-                            <input type="number" value="${seed.population}" 
-                                onchange="updateSeed(${index}, 'population', parseFloat(this.value))">
-                        </div>
+function getAllSoja(){
+  var base=seedData.map(function(s){var o=sojaData.find(function(u){return u.id===s.id;});return o||s;});
+  var extras=sojaData.filter(function(u){return !seedData.find(function(s){return s.id===u.id;});});
+  return base.concat(extras).sort(function(a,b){return parseFloat(a.gm)-parseFloat(b.gm);});
+}
 
-                        ${seed.mode === 'plants' ? `
-                        <div class="input-group">
-                            <label>Germinação (%)</label>
-                            <input type="number" value="${seed.germination}" step="1" min="0" max="100"
-                                onchange="updateSeed(${index}, 'germination', parseFloat(this.value))">
-                        </div>
-                        ` : '<div></div>'}
+function switchSection(name,btn){
+  currentSection=name;
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('section-'+name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  if(btn){btn.classList.add('active');}else{var t=document.querySelector('[data-section="'+name+'"]');if(t)t.classList.add('active');}
+  document.querySelectorAll('.sb-item').forEach(function(s){s.classList.remove('active');});
+  var idx=['soja','brachiaria','tsi','cultivo','cultivo90'].indexOf(name);
+  if(idx>=0){var items=document.querySelectorAll('.sb-item');if(items[idx])items[idx].classList.add('active');}
+  document.getElementById('fab-btn').style.display=(name==='soja'||name==='brachiaria')?'flex':'none';
+  if(name==='soja')renderSoja();
+  if(name==='brachiaria')renderBrachiaria();
+  if(name==='tsi')renderTSI();
+  renderSectionBanner(name);
+}
 
-                        <div class="input-group">
-                            <label>Espaçamento</label>
-                            <select onchange="updateSeed(${index}, 'spacing', parseFloat(this.value))">
-                                <option value="50" ${seed.spacing === 50 ? 'selected' : ''}>50 cm</option>
-                                <option value="45" ${seed.spacing === 45 ? 'selected' : ''}>45 cm</option>
-                            </select>
-                        </div>
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sbOverlay').classList.toggle('open');
+}
 
-                        <div class="input-group">
-                            <label>Preço do Bag (R$)</label>
-                            <input type="number" value="${seed.priceBag}" step="0.01" min="0"
-                                onchange="updateSeed(${index}, 'priceBag', parseFloat(this.value))">
-                        </div>
+function renderSoja(data){
+  var all=data||getAllSoja();
+  document.getElementById('soja-count').textContent=all.length;
+  var grid=document.getElementById('soja-grid');
+  var empty=document.getElementById('soja-empty');
+  if(!all.length){grid.innerHTML='';empty.style.display='flex';return;}
+  empty.style.display='none';
+  grid.innerHTML=all.map(function(c){
+    return '<div class="card" onclick="openDetail(\''+c.id+'\')">'
+      +'<div class="card-photo">'
+      +(c.fotos&&c.fotos.length?'<img src="'+c.fotos[0]+'" alt="'+c.nome+'" loading="lazy">'
+        :'<div class="card-photo-ph">'+c.nome+'</div>')
+      +(c.status?'<div class="cbadge '+(c.status==='LANÇAMENTO'?'bl':'or')+'">'+c.status+'</div>':'')
+      +'</div>'
+      +'<div class="card-body">'
+      +'<div class="card-name">'+c.nome+'</div>'
+      +'<div class="card-obt">'+(c.obtentora||'—')+'</div>'
+      +'<div class="card-tags">'
+      +'<span class="tag tb">GM '+c.gm+'</span>'
+      +(c.bio?'<span class="tag">'+c.bio+'</span>':'')
+      +(c.nema==='SIM'?'<span class="tag tg">Res. Nematoide</span>':'<span class="tag tr">Sem resist.</span>')
+      +'</div>'
+      +'<div class="card-specs">'
+      +'<div><div class="spec-label">Ciclo</div><div class="spec-value">'+(c.ciclo||'—')+' d</div></div>'
+      +'<div><div class="spec-label">PMG</div><div class="spec-value">'+(c.pmg?c.pmg+'g':'—')+'</div></div>'
+      +'<div><div class="spec-label">Plantio</div><div class="spec-value" style="font-size:.72em">'+(c.epoca||'—')+'</div></div>'
+      +'<div><div class="spec-label">Fertilidade</div><div class="spec-value">'+(c.fert||'—')+'</div></div>'
+      +'</div></div>'
+      + getCardBannerHTML(c.id)
+      +'<div class="card-actions" onclick="event.stopPropagation()">'
+      +'<button class="btn-act edit" onclick="editCultivar(\''+c.id+'\')">Editar</button>'
+      +(!c.id.startsWith('s-')?'<button class="btn-act del" onclick="deleteCultivar(\''+c.id+'\')">Excluir</button>':'')
+      +'</div></div>';
+  }).join('');
+}
 
-                        <div class="input-group">
-                            <label>Área desta Cultivar (ha)</label>
-                            <input type="number" value="${seed.hectares}" step="1" min="0"
-                                onchange="updateSeed(${index}, 'hectares', parseFloat(this.value))">
-                        </div>
-                    </div>
+function applyFilters(){
+  var bio=document.getElementById('filter-bio').value;
+  var nema=document.getElementById('filter-nema').value;
+  var obt=document.getElementById('filter-obt').value;
+  var data=getAllSoja();
+  if(bio)data=data.filter(function(c){return c.bio===bio;});
+  if(nema)data=data.filter(function(c){return c.nema===nema;});
+  if(obt)data=data.filter(function(c){return c.obtentora===obt;});
+  renderSoja(data);
+}
 
-                    <div class="ts-checkbox" onclick="toggleTS(${index})">
-                        <input type="checkbox" ${seed.hasTS ? 'checked' : ''} 
-                            onclick="event.stopPropagation()">
-                        <div class="ts-info">
-                            <div class="ts-name">
-                                ${seed.hasTS && seed.ts.name ? seed.ts.name : 'Incluir Tratamento de Sementes'}
-                            </div>
-                            ${seed.hasTS && seed.ts.products.length > 0 ? 
-                                `<div class="ts-cost">R$ ${calculateTSCost(seed.ts).toFixed(2)}/ha</div>` : ''}
-                        </div>
-                        ${seed.hasTS ? 
-                            `<button class="btn-config-ts" onclick="openTSModal(${index}); event.stopPropagation();">⚙️ Configurar</button>` : ''}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
+function resetFilters(){
+  ['filter-bio','filter-nema','filter-obt'].forEach(function(id){document.getElementById(id).value='';});
+  renderSoja();
+}
 
-            // Atualizar total de hectares (soma de todas cultivares)
-            const totalHectares = seeds.reduce((sum, seed) => sum + (seed.hectares || 0), 0);
-            document.getElementById('hectaresTotal').value = totalHectares;
+function renderBrachiaria(){
+  var grid=document.getElementById('brachiaria-grid');
+  if(!brachiariaData.length){grid.innerHTML='';return;}
+  grid.innerHTML=brachiariaData.map(function(b){
+    return '<div class="card">'
+      +'<div class="card-photo" style="background:linear-gradient(135deg,#F1F8E9,#C5E1A5)">'
+      +(b.fotos&&b.fotos.length?'<img src="'+b.fotos[0]+'" alt="'+b.especie+'">'
+        :'<div class="card-photo-ph">'+b.especie+'</div>')
+      +'</div>'
+      +'<div class="card-body">'
+      +'<div class="card-name">'+b.especie+'</div>'
+      +'<div class="card-obt">SOESP</div>'
+      +'<div class="card-tags">'
+      +'<span class="tag tg">'+b.trat+'</span>'
+      +(b.pureza?'<span class="tag">Pureza '+b.pureza+'%</span>':'')
+      +(b.vc?'<span class="tag">VC '+b.vc+'%</span>':'')
+      +'</div>'
+      +(b.obs?'<div style="font-size:.8em;color:var(--text2);margin-top:5px">'+b.obs+'</div>':'')
+      +'</div>'
+      +'<div class="card-actions">'
+      +'<button class="btn-act del" onclick="deleteBrachiaria(\''+b.id+'\')">Excluir</button>'
+      +'</div></div>';
+  }).join('');
+}
 
-            calculateResults();
-        }
+function openDetail(id){
+  var all=getAllSoja();
+  var c=null;
+  for(var i=0;i<all.length;i++){if(all[i].id===id){c=all[i];break;}}
+  if(!c)return;
+  document.getElementById('detail-header-name').textContent=c.nome;
+  var fotos=c.fotos||[];
+  var bens=c.beneficios||[];
+  var ress=c.resultados||[];
+  var html='<div class="detail-hero">';
+  if(fotos.length){
+    html+='<img src="'+fotos[0]+'" id="detail-hero-img" alt="'+c.nome+'">';
+    if(fotos.length>1){
+      html+='<div class="hero-nav">';
+      for(var i=0;i<fotos.length;i++)html+='<div class="hdot'+(i===0?' active':'')+'" onclick="changeHero('+i+',\''+id+'\')"></div>';
+      html+='</div>';
+    }
+  }else{html+='<div class="detail-hero-ph">'+c.nome+'</div>';}
+  if(c.status)html+='<div class="cbadge '+(c.status==='LANÇAMENTO'?'bl':'or')+'" style="position:absolute;top:13px;left:13px">'+c.status+'</div>';
+  html+='</div><div class="detail-body">';
+  html+='<div class="detail-name">'+c.nome+'</div>';
+  html+='<div class="detail-obt">'+(c.obtentora||'')+'</div>';
+  html+='<div class="detail-tags"><span class="tag tb">GM '+c.gm+'</span>';
+  if(c.bio)html+='<span class="tag">'+c.bio+'</span>';
+  html+=(c.nema==='SIM'?'<span class="tag tg">Res. Nematoide</span>':'<span class="tag tr">Sem resistência</span>');
+  if(c.flor)html+='<span class="tag">Flor '+c.flor+'</span>';
+  html+='</div>';
+  html+='<div class="d-sec">Características Técnicas</div>';
+  html+='<div class="specs-grid">';
+  html+='<div><div class="si-label">Grupo de Maturação</div><div class="si-val">'+c.gm+'</div></div>';
+  html+='<div><div class="si-label">Ciclo</div><div class="si-val">'+(c.ciclo||'—')+' dias</div></div>';
+  html+='<div><div class="si-label">PMG</div><div class="si-val">'+(c.pmg?c.pmg+'g':'—')+'</div></div>';
+  html+='<div><div class="si-label">Exig. Fertilidade</div><div class="si-val">'+(c.fert||'—')+'</div></div>';
+  html+='<div style="grid-column:1/-1"><div class="si-label">Época de Plantio</div><div class="si-val">'+(c.epoca||'—')+'</div></div>';
+  html+='<div style="grid-column:1/-1"><div class="si-label">População de Plantas</div><div class="si-val">'+(c.pop||'—')+'</div></div>';
+  html+='</div>';
+  if(bens.length){
+    html+='<div class="d-sec">Benefícios</div><div class="bcard">';
+    for(var i=0;i<bens.length;i++)html+='<div class="bitem"><span class="bdot">&#9679;</span>'+bens[i]+'</div>';
+    html+='</div>';
+  }
+  if(ress.length){
+    html+='<div class="d-sec">Resultados de Campo</div>';
+    for(var i=0;i<ress.length;i++){
+      var r=ress[i];
+      var meta=[r.safra,r.responsavel].filter(Boolean).join(' · ');
+      html+='<div class="rcard"><div class="rcard-title">'+(r.local||'Campo')+'</div>';
+      if(meta)html+='<div class="rcard-meta">'+meta+'</div>';
+      if(r.prod)html+='<div class="rcard-prod">'+r.prod+' sc/ha</div>';
+      if(r.obs)html+='<div class="rcard-obs">'+r.obs+'</div>';
+      html+='</div>';
+    }
+  }
+  if(c.obs)html+='<div class="d-sec">Observações</div><div style="background:white;border-radius:11px;padding:13px;font-size:.85em;color:var(--text2);box-shadow:0 1px 4px rgba(0,0,0,.05)">'+c.obs+'</div>';
+  html+='<div style="height:28px"></div></div>';
+  document.getElementById('detail-content').innerHTML=html;
+  document.getElementById('detail-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
 
-        function updateSeed(index, field, value) {
-            seeds[index][field] = value;
-            saveData();
-            renderSeeds();
-        }
+function changeHero(idx,id){
+  var all=getAllSoja();
+  var c=null;
+  for(var i=0;i<all.length;i++){if(all[i].id===id){c=all[i];break;}}
+  if(!c||!c.fotos||!c.fotos[idx])return;
+  var img=document.getElementById('detail-hero-img');
+  if(img)img.src=c.fotos[idx];
+  document.querySelectorAll('.hdot').forEach(function(d,i){d.classList.toggle('active',i===idx);});
+}
 
-        function toggleTS(index) {
-            seeds[index].hasTS = !seeds[index].hasTS;
-            if (seeds[index].hasTS) {
-                openTSModal(index);
-            }
-            saveData();
-            renderSeeds();
-        }
+function closeDetail(){
+  document.getElementById('detail-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
 
-        // Modal TS Functions
-        function openTSModal(index) {
-            currentSeedIndex = index;
-            const seed = seeds[index];
-            
-            document.getElementById('tsName').value = seed.ts.name || '';
-            
-            const container = document.getElementById('productsContainer');
-            container.innerHTML = '';
-            
-            seed.ts.products.forEach((prod, i) => {
-                addProductToModal(prod, i);
-            });
-            
-            updateTSTotal();
-            document.getElementById('tsModal').classList.add('active');
-        }
+function openAddModal(){
+  if(currentSection==='brachiaria'){openBrachiariaModal();return;}
+  document.getElementById('modal-title').textContent='Novo Cultivar de Soja';
+  document.getElementById('edit-id').value='';
+  clearForm();
+  document.getElementById('soja-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
 
-        function closeTSModal() {
-            document.getElementById('tsModal').classList.remove('active');
-            currentSeedIndex = null;
-        }
+function clearForm(){
+  ['f-nome','f-ciclo','f-epoca','f-pop','f-beneficios','f-obs'].forEach(function(id){document.getElementById(id).value='';});
+  ['f-obtentora','f-status','f-bio','f-fert'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-pmg').value='';
+  document.getElementById('f-gm').value='';
+  document.getElementById('f-flor').value='Roxa';
+  document.getElementById('f-nema').value='SIM';
+  currentPhotos=[];
+  document.getElementById('photo-preview').innerHTML='';
+  document.getElementById('results-container').innerHTML='';
+  resultCount=0;
+}
 
-        function addProduct() {
-            if (currentSeedIndex === null) return;
-            
-            const product = {
-                name: '',
-                dose: 0,
-                price: 0
-            };
-            
-            seeds[currentSeedIndex].ts.products.push(product);
-            addProductToModal(product, seeds[currentSeedIndex].ts.products.length - 1);
-            updateTSTotal();
-        }
+function closeModal(){
+  document.getElementById('soja-modal').classList.remove('open');
+  document.body.style.overflow='';
+}
 
-        function addProductToModal(product, index) {
-            const container = document.getElementById('productsContainer');
-            const div = document.createElement('div');
-            div.className = 'ts-product';
-            div.innerHTML = `
-                <div class="ts-product-header">
-                    <h4>Produto ${index + 1}</h4>
-                    <button class="btn-remove" onclick="removeProduct(${index})">×</button>
-                </div>
-                <div class="input-group">
-                    <label>Nome do Produto</label>
-                    <input type="text" value="${product.name}" style="max-width: 100%;"
-                        onchange="updateProduct(${index}, 'name', this.value)">
-                </div>
-                <div class="input-group">
-                    <label>Dose (mL/100kg)</label>
-                    <input type="number" value="${product.dose}" step="1" min="0"
-                        onchange="updateProduct(${index}, 'dose', parseFloat(this.value))">
-                </div>
-                <div class="input-group">
-                    <label>Preço (R$/litro)</label>
-                    <input type="number" value="${product.price}" step="0.01" min="0"
-                        onchange="updateProduct(${index}, 'price', parseFloat(this.value))">
-                </div>
-            `;
-            container.appendChild(div);
-        }
+function editCultivar(id){
+  var all=getAllSoja();
+  var c=null;
+  for(var i=0;i<all.length;i++){if(all[i].id===id){c=all[i];break;}}
+  if(!c)return;
+  document.getElementById('modal-title').textContent='Editar Cultivar';
+  document.getElementById('edit-id').value=id;
+  document.getElementById('f-nome').value=c.nome;
+  document.getElementById('f-obtentora').value=c.obtentora||'';
+  document.getElementById('f-status').value=c.status||'';
+  document.getElementById('f-gm').value=c.gm||'';
+  document.getElementById('f-ciclo').value=c.ciclo||'';
+  document.getElementById('f-pmg').value=c.pmg||'';
+  document.getElementById('f-flor').value=c.flor||'Roxa';
+  document.getElementById('f-bio').value=c.bio||'';
+  document.getElementById('f-nema').value=c.nema||'SIM';
+  document.getElementById('f-fert').value=c.fert||'';
+  document.getElementById('f-epoca').value=c.epoca||'';
+  document.getElementById('f-pop').value=c.pop||'';
+  document.getElementById('f-beneficios').value=(c.beneficios||[]).join('\n');
+  document.getElementById('f-obs').value=c.obs||'';
+  currentPhotos=[].concat(c.fotos||[]);
+  renderPhotoPreview();
+  document.getElementById('results-container').innerHTML='';
+  resultCount=0;
+  (c.resultados||[]).forEach(function(r){addResultEntry(r);});
+  document.getElementById('soja-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
 
-        function updateProduct(index, field, value) {
-            if (currentSeedIndex === null) return;
-            seeds[currentSeedIndex].ts.products[index][field] = value;
-            updateTSTotal();
-        }
+function saveCultivar(){
+  var nome=document.getElementById('f-nome').value.trim();
+  if(!nome){showToast('Informe o nome do cultivar');return;}
+  var editId=document.getElementById('edit-id').value;
+  var bens=document.getElementById('f-beneficios').value.split('\n').map(function(b){return b.trim();}).filter(Boolean);
+  var ress=[];
+  document.querySelectorAll('.result-entry').forEach(function(el){
+    ress.push({local:el.querySelector('[name="r-local"]').value,safra:el.querySelector('[name="r-safra"]').value,responsavel:el.querySelector('[name="r-resp"]').value,prod:el.querySelector('[name="r-prod"]').value,obs:el.querySelector('[name="r-obs"]').value});
+  });
+  var c={id:editId||'u-'+Date.now(),nome:nome,obtentora:document.getElementById('f-obtentora').value,status:document.getElementById('f-status').value,gm:document.getElementById('f-gm').value,ciclo:document.getElementById('f-ciclo').value,pmg:document.getElementById('f-pmg').value,flor:document.getElementById('f-flor').value,bio:document.getElementById('f-bio').value,nema:document.getElementById('f-nema').value,fert:document.getElementById('f-fert').value,epoca:document.getElementById('f-epoca').value,pop:document.getElementById('f-pop').value,beneficios:bens,fotos:[].concat(currentPhotos),resultados:ress,obs:document.getElementById('f-obs').value};
+  var idx=sojaData.findIndex(function(s){return s.id===editId;});
+  if(idx>=0)sojaData[idx]=c;else sojaData.push(c);
+  localStorage.setItem('soja-data',JSON.stringify(sojaData));
+  closeModal();renderSoja();showToast('Cultivar salvo');
+}
 
-        function removeProduct(index) {
-            if (currentSeedIndex === null) return;
-            seeds[currentSeedIndex].ts.products.splice(index, 1);
-            openTSModal(currentSeedIndex);
-        }
+function deleteCultivar(id){
+  if(!confirm('Excluir este cultivar?'))return;
+  sojaData=sojaData.filter(function(s){return s.id!==id;});
+  localStorage.setItem('soja-data',JSON.stringify(sojaData));
+  renderSoja();showToast('Excluído');
+}
 
-        function updateTSTotal() {
-            if (currentSeedIndex === null) return;
-            const cost = calculateTSCost(seeds[currentSeedIndex].ts);
-            document.getElementById('tsTotalCost').textContent = `R$ ${cost.toFixed(2)}/ha`;
-        }
+function addResultEntry(data){
+  resultCount++;
+  var div=document.createElement('div');
+  div.className='result-entry';
+  div.innerHTML='<div class="re-hd"><div class="re-title">Resultado '+resultCount+'</div><button class="btn-rm-r" onclick="this.closest(\'.result-entry\').remove()">&#10005;</button></div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label>Local / Fazenda</label><input class="fi" name="r-local" value="'+(data&&data.local||'')+'" placeholder="Ex: Fazenda Santa Cruz"></div>'
+    +'<div class="form-group"><label>Safra</label><input class="fi" name="r-safra" value="'+(data&&data.safra||'')+'" placeholder="Ex: 2024/25"></div>'
+    +'</div>'
+    +'<div class="form-row">'
+    +'<div class="form-group"><label>Produtor</label><input class="fi" name="r-resp" value="'+(data&&data.responsavel||'')+'" placeholder="Nome"></div>'
+    +'<div class="form-group"><label>Produtividade (sc/ha)</label><input class="fi" name="r-prod" type="number" max="9999999" value="'+(data&&data.prod||'')+'" placeholder="Ex: 72"></div>'
+    +'</div>'
+    +'<div class="form-group"><label>Obs.</label><input class="fi" name="r-obs" value="'+(data&&data.obs||'')+'" placeholder="Condições, destaques..."></div>';
+  document.getElementById('results-container').appendChild(div);
+}
 
-        function calculateTSCost(ts) {
-            return ts.products.reduce((total, prod) => {
-                // dose em mL/100kg convertido para L/100kg × preço/L
-                return total + ((prod.dose / 1000) * prod.price);
-            }, 0);
-        }
+function handlePhotos(e){
+  Array.from(e.target.files).forEach(function(file){
+    var r=new FileReader();
+    r.onload=function(ev){currentPhotos.push(ev.target.result);renderPhotoPreview();};
+    r.readAsDataURL(file);
+  });
+}
 
-        function saveTSModal() {
-            if (currentSeedIndex === null) return;
-            seeds[currentSeedIndex].ts.name = document.getElementById('tsName').value;
-            saveData();
-            closeTSModal();
-            renderSeeds();
-        }
+function renderPhotoPreview(){
+  document.getElementById('photo-preview').innerHTML=currentPhotos.map(function(src,i){
+    return '<div class="photo-wrap"><img src="'+src+'" class="photo-thumb"><div class="photo-rm" onclick="removePhoto('+i+')">&#215;</div></div>';
+  }).join('');
+}
 
-        // Cálculos
-        function calculateSeedData(seed) {
-            const hectares = seed.hectares || 0;
-            
-            // Calcular sementes necessárias/ha
-            let seedsPerHa;
-            if (seed.mode === 'plants') {
-                // Plantas/ha ÷ (germinação/100)
-                seedsPerHa = seed.population / (seed.germination / 100);
-            } else {
-                seedsPerHa = seed.population;
-            }
-            
-            // Metros lineares por hectare
-            const linearMeters = seed.spacing === 50 ? 20000 : 22222;
-            
-            // Sementes por metro
-            const seedsPerMeter = seedsPerHa / linearMeters;
-            
-            // Hectares que 1 bag planta
-            const haPerBag = 5000000 / seedsPerHa;
-            
-            // Bags necessários para área desta cultivar
-            const totalBags = hectares / haPerBag;
-            
-            // Custo semente por hectare
-            const seedCostPerHa = seed.priceBag / haPerBag;
-            
-            // Custo TS por hectare
-            const tsCostPerHa = seed.hasTS ? calculateTSCost(seed.ts) : 0;
-            
-            // Custo total por hectare
-            const totalCostPerHa = seedCostPerHa + tsCostPerHa;
-            
-            // Custo total para área desta cultivar
-            const totalCost = totalCostPerHa * hectares;
-            
-            // Conversão em sacas
-            const priceSaca = parseFloat(document.getElementById('precoSacaSoja').value) || 120;
-            const costInSacas = totalCostPerHa / priceSaca;
-            
-            return {
-                seedsPerHa: Math.round(seedsPerHa),
-                seedsPerMeter: seedsPerMeter.toFixed(1),
-                totalBags: totalBags.toFixed(2),
-                seedCostPerHa: seedCostPerHa.toFixed(2),
-                tsCostPerHa: tsCostPerHa.toFixed(2),
-                totalCostPerHa: totalCostPerHa.toFixed(2),
-                costInSacas: costInSacas.toFixed(2),
-                totalCost: totalCost.toFixed(2)
-            };
-        }
+function removePhoto(idx){currentPhotos.splice(idx,1);renderPhotoPreview();}
 
-        function calculateResults() {
-            if (seeds.length === 0) {
-                document.getElementById('resultsCard').style.display = 'none';
-                return;
-            }
+function openBrachiariaModal(){
+  currentBrachiariaPhotos=[];
+  document.getElementById('b-photo-preview').innerHTML='';
+  document.getElementById('b-obs').value='';
+  document.getElementById('brachiaria-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
 
-            const results = seeds.map(seed => ({
-                seed,
-                data: calculateSeedData(seed)
-            }));
+function closeBrachiariaModal(){
+  document.getElementById('brachiaria-modal').classList.remove('open');
+  document.body.style.overflow='';
+}
 
-            // Encontrar melhor valor
-            const bestPerHa = Math.min(...results.map(r => parseFloat(r.data.totalCostPerHa)));
-            const bestTotal = Math.min(...results.map(r => parseFloat(r.data.totalCost)));
+function handleBrachiariaPhotos(e){
+  Array.from(e.target.files).forEach(function(file){
+    var r=new FileReader();
+    r.onload=function(ev){
+      currentBrachiariaPhotos.push(ev.target.result);
+      document.getElementById('b-photo-preview').innerHTML=currentBrachiariaPhotos.map(function(src,i){
+        return '<div class="photo-wrap"><img src="'+src+'" class="photo-thumb"><div class="photo-rm" onclick="currentBrachiariaPhotos.splice('+i+',1);this.closest(\'.photo-wrap\').remove()">&#215;</div></div>';
+      }).join('');
+    };
+    r.readAsDataURL(file);
+  });
+}
 
-            // Render table
-            const table = document.getElementById('resultsTable');
-            const thead = table.querySelector('thead tr');
-            const tbody = table.querySelector('tbody');
+function saveBrachiaria(){
+  var b={id:'b-'+Date.now(),especie:document.getElementById('b-especie').value,trat:document.getElementById('b-trat').value,pureza:document.getElementById('b-pureza').value,vc:document.getElementById('b-vc').value,fotos:[].concat(currentBrachiariaPhotos),obs:document.getElementById('b-obs').value};
+  brachiariaData.push(b);
+  localStorage.setItem('brachiaria-data',JSON.stringify(brachiariaData));
+  closeBrachiariaModal();renderBrachiaria();showToast('Brachiaria salva');
+}
 
-            // Header
-            thead.innerHTML = '<th>Item</th>';
-            results.forEach(r => {
-                thead.innerHTML += `<th>${r.seed.name || 'Sem nome'}</th>`;
-            });
+function deleteBrachiaria(id){
+  if(!confirm('Excluir?'))return;
+  brachiariaData=brachiariaData.filter(function(b){return b.id!==id;});
+  localStorage.setItem('brachiaria-data',JSON.stringify(brachiariaData));
+  renderBrachiaria();
+}
 
-            // Body
-            const rows = [
-                { label: 'Área (ha)', key: 'hectares', source: 'seed' },
-                { label: 'Sementes/ha', key: 'seedsPerHa' },
-                { label: 'Sementes/metro', key: 'seedsPerMeter' },
-                { label: 'Bags necessários', key: 'totalBags' },
-                { label: 'Custo semente/ha', key: 'seedCostPerHa', format: 'currency' },
-                { label: 'Custo TS/ha', key: 'tsCostPerHa', format: 'currency' },
-                { label: 'CUSTO TOTAL/HA', key: 'totalCostPerHa', format: 'currency', class: 'total-row', best: bestPerHa },
-                { label: 'Em sacas soja', key: 'costInSacas', suffix: ' sc' },
-                { label: 'CUSTO TOTAL', key: 'totalCost', format: 'currency', class: 'total-row', best: bestTotal }
-            ];
+function toggleIC(header){
+  header.classList.toggle('expanded');
+  header.nextElementSibling.classList.toggle('show');
+}
 
-            tbody.innerHTML = '';
-            rows.forEach(row => {
-                const tr = document.createElement('tr');
-                if (row.class) tr.className = row.class;
-                
-                tr.innerHTML = `<td>${row.label}</td>`;
-                results.forEach(r => {
-                    const value = row.source === 'seed' ? r.seed[row.key] : r.data[row.key];
-                    let displayValue = value;
-                    
-                    if (row.format === 'currency') {
-                        displayValue = `R$ ${value}`;
-                    }
-                    if (row.suffix) {
-                        displayValue += row.suffix;
-                    }
-                    
-                    const isBest = row.best && parseFloat(value) === row.best;
-                    tr.innerHTML += `<td class="${isBest ? 'best-value' : ''}">${displayValue}</td>`;
-                });
-                
-                tbody.appendChild(tr);
-            });
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2400);
+}
 
-            document.getElementById('resultsCard').style.display = 'block';
-        }
-    </script>
+// ========== BANNERS CONFIG ==========
+// Edite aqui os banners de cada seção
+// Para cada banner: {titulo, subtitulo, cor (gradiente CSS), cta (texto botão), link, imagem (URL ou base64)}
+var sectionBanners = {
+  soja: [
+    {titulo:'SAFRA 2025/2026', subtitulo:'Portfólio completo de cultivares de soja para o Cerrado', cor:'linear-gradient(135deg,#007AFF,#0051D5)', cta:'Ver cultivares', link:'', imagem:''},
+    {titulo:'CULTIVO PRO', subtitulo:'Sementes com garantia de germinação e vigor ≥ 90%', cor:'linear-gradient(135deg,#1B5E20,#2E7D32)', cta:'Saiba mais', link:'', imagem:''},
+    {titulo:'TSI 2024', subtitulo:'Tratamento industrial com proteção total para sua semente', cor:'linear-gradient(135deg,#E65100,#BF360C)', cta:'Protocolos', link:'', imagem:''}
+  ],
+  brachiaria: [
+    {titulo:'SOESP ADVANCED', subtitulo:'Tecnologia exclusiva em sementes forrageiras desde 2011', cor:'linear-gradient(135deg,#33691E,#558B2F)', cta:'Conheça', link:'', imagem:''},
+    {titulo:'ILPF', subtitulo:'Sementes ideais para integração lavoura-pecuária-floresta', cor:'linear-gradient(135deg,#1565C0,#1976D2)', cta:'Saiba mais', link:'', imagem:''}
+  ],
+  tsi: [
+    {titulo:'PROTOCOLOS TSI 2024', subtitulo:'GO · TO · MS Norte — Tratamento industrial de sementes', cor:'linear-gradient(135deg,#0277BD,#0288D1)', cta:'Ver protocolos', link:'', imagem:''}
+  ],
+  cultivo: [
+    {titulo:'CULTIVO PRO', subtitulo:'Proteção à altura que sua lavoura merece', cor:'linear-gradient(135deg,#1B5E20,#2E7D32)', cta:'Ativar garantia', link:'', imagem:''},
+    {titulo:'VOUCHER R$ 500/ha', subtitulo:'Bônus válido por 1 ano para próxima safra', cor:'linear-gradient(135deg,#E65100,#BF360C)', cta:'Ver condições', link:'', imagem:''}
+  ],
+  cultivo90: [
+    {titulo:'CULTIVO 90', subtitulo:'Germinação e vigor garantidos ≥ 90%', cor:'linear-gradient(135deg,#E65100,#BF360C)', cta:'Conheça', link:'', imagem:''}
+  ]
+};
 
+// Banners dos cards de soja (aparecem colapsáveis em cada card)
+// Pode ter até 3 slides por card. Chave = id do cultivar
+var cardBanners = {
+  'default': [
+    {titulo:'Cultivo Pro', subtitulo:'Garanta sua semente com germinação ≥ 90%', cor:'linear-gradient(135deg,#1B5E20,#2E7D32)', cta:'Saiba mais'},
+    {titulo:'TSI 2024', subtitulo:'Tratamento industrial com proteção total', cor:'linear-gradient(135deg,#007AFF,#0051D5)', cta:'Ver protocolos'}
+  ]
+};
+
+function getSectionBannerHTML(section) {
+  var banners = sectionBanners[section] || [];
+  if (!banners.length) return '';
+  var slides = banners.map(function(b, i) {
+    if (b.imagem) {
+      return '<div class="sbc-slide"><img src="'+b.imagem+'" alt="'+b.titulo+'"></div>';
+    }
+    return '<div class="sbc-slide"><div class="sbc-slide-ph" style="'+b.cor+';color:white">'
+      +'<div style="font-size:1.1em;font-weight:800;letter-spacing:-.2px">'+b.titulo+'</div>'
+      +'<div style="font-size:.8em;opacity:.82">'+b.subtitulo+'</div>'
+      +(b.cta?'<div style="display:inline-flex;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:5px 14px;font-size:.74em;font-weight:600;margin-top:4px;align-self:flex-start">'+b.cta+'</div>':'')
+      +'</div></div>';
+  }).join('');
+  var dots = banners.map(function(b,i){return '<div class="bdot2'+(i===0?' active':'')+'"></div>';}).join('');
+  var nav = banners.length > 1
+    ? '<button class="sbc-nav prev" onclick="sbcPrev(this)">&#8249;</button><button class="sbc-nav next" onclick="sbcNext(this)">&#8250;</button>'
+    : '';
+  return '<div class="section-banner-carousel" data-idx="0" data-total="'+banners.length+'">'
+    + nav
+    + '<div class="sbc-track">'+slides+'</div>'
+    + (banners.length > 1 ? '<div class="sbc-dots">'+dots+'</div>' : '')
+    +'</div>';
+}
+
+function renderSectionBanner(section) {
+  var wrap = document.getElementById('sbanner-'+section);
+  if (!wrap) return;
+  var html = getSectionBannerHTML(section);
+  if (html) { wrap.innerHTML = html; wrap.classList.add('has-banners'); }
+}
+
+function sbcPrev(btn) {
+  var car = btn.parentElement;
+  var idx = parseInt(car.getAttribute('data-idx'));
+  var total = parseInt(car.getAttribute('data-total'));
+  var newIdx = (idx - 1 + total) % total;
+  sbcGo(car, newIdx);
+}
+function sbcNext(btn) {
+  var car = btn.parentElement;
+  var idx = parseInt(car.getAttribute('data-idx'));
+  var total = parseInt(car.getAttribute('data-total'));
+  var newIdx = (idx + 1) % total;
+  sbcGo(car, newIdx);
+}
+function sbcGo(car, idx) {
+  car.setAttribute('data-idx', idx);
+  car.querySelector('.sbc-track').style.transform = 'translateX(-'+idx+'00%)';
+  car.querySelectorAll('.bdot2').forEach(function(d,i){d.classList.toggle('active',i===idx);});
+}
+
+function getCardBannerHTML(cid) {
+  var banners = cardBanners[cid] || cardBanners['default'] || [];
+  if (!banners.length) return '';
+  var uid = 'cbanner-'+cid.replace(/[^a-z0-9]/gi,'');
+  var slides = banners.map(function(b, i) {
+    if (b.imagem) {
+      return '<div class="banner-slide"><img src="'+b.imagem+'" alt="'+b.titulo+'"></div>';
+    }
+    return '<div class="banner-slide"><div class="banner-slide-ph" style="'+b.cor+';color:white">'
+      +'<div class="bs-title">'+b.titulo+'</div>'
+      +'<div class="bs-sub">'+b.subtitulo+'</div>'
+      +(b.cta?'<div class="bs-cta">'+b.cta+'</div>':'')
+      +'</div></div>';
+  }).join('');
+  var dots = banners.length > 1
+    ? '<div class="banner-dots">'+banners.map(function(b,i){return '<div class="bdot2'+(i===0?' active':'')+'"></div>';}).join('')+'</div>'
+    : '';
+  return '<div class="card-banner-toggle" onclick="toggleCardBanner(this)">'
+    +'<div class="cbt-label">&#9632;&nbsp;Propaganda</div>'
+    +'<span class="cbt-chev">&#9658;</span></div>'
+    +'<div class="card-banner-body" id="'+uid+'">'
+    +'<div style="position:relative" data-idx="0" data-total="'+banners.length+'">'
+    +slides
+    + (banners.length > 1 ? dots : '')
+    +'</div></div>';
+}
+
+function toggleCardBanner(toggle) {
+  var body = toggle.nextElementSibling;
+  var chev = toggle.querySelector('.cbt-chev');
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+
+
+// ========== TSI DATA ==========
+var tsiProducts = JSON.parse(localStorage.getItem('tsi-products') || 'null') || [
+  {id:'p-01',nome:'Fipronil',cat:'Inseticida',img:''},
+  {id:'p-02',nome:'Imidacloprido',cat:'Inseticida',img:''},
+  {id:'p-03',nome:'Vitavax (fungicida)',cat:'Fungicida',img:''},
+  {id:'p-04',nome:'Super Root Micros',cat:'Micronutriente',img:''},
+  {id:'p-05',nome:'Polímero',cat:'Adjuvante',img:''},
+  {id:'p-06',nome:'Pó secante',cat:'Adjuvante',img:''},
+  {id:'p-07',nome:'Grafite',cat:'Adjuvante',img:''},
+  {id:'p-08',nome:'Dermacor',cat:'Inseticida',img:''},
+  {id:'p-09',nome:'CTS-1000',cat:'Inoculante',img:''},
+  {id:'p-10',nome:'Saori',cat:'Biológico',img:''},
+  {id:'p-11',nome:'Profix',cat:'Biológico',img:''},
+  {id:'p-12',nome:'Shocker',cat:'Biológico',img:''},
+  {id:'p-13',nome:'Standak Top',cat:'Fungicida/Inseticida',img:''},
+  {id:'p-14',nome:'Poncho',cat:'Inseticida',img:''},
+  {id:'p-15',nome:'Incrustante Alcobering®',cat:'Adjuvante',img:''},
+  {id:'p-16',nome:'Carboxina',cat:'Fungicida',img:''},
+  {id:'p-17',nome:'Tiram',cat:'Fungicida',img:''}
+];
+
+var tsiProtocols = JSON.parse(localStorage.getItem('tsi-protocols') || 'null') || [
+  {id:'t-01',nome:'Goiás Mais',sub:'Proteção base',ico:'G+',cor:'#E8F5E9',corTxt:'#1B5E20',
+   produtos:[{pid:'p-01',dose:'200 ml'},{pid:'p-02',dose:'100 ml'},{pid:'p-03',dose:'250 ml'},{pid:'p-04',dose:'175 ml'},{pid:'p-05',dose:''},{pid:'p-06',dose:''},{pid:'p-07',dose:''}]},
+  {id:'t-02',nome:'Goiás Ultra',sub:'Dermacor + Imidacloprido',ico:'GU',cor:'#E3F2FD',corTxt:'#0277BD',
+   produtos:[{pid:'p-08',dose:'50 ml'},{pid:'p-02',dose:'100 ml'},{pid:'p-03',dose:'250 ml'},{pid:'p-04',dose:'175 ml'},{pid:'p-05',dose:''},{pid:'p-06',dose:''},{pid:'p-07',dose:''}]},
+  {id:'t-03',nome:'Goiás Ultra Bio',sub:'Proteção + biológico completo',ico:'UBio',cor:'#FCE4EC',corTxt:'#880E4F',
+   produtos:[{pid:'p-08',dose:'50 ml'},{pid:'p-02',dose:'100 ml'},{pid:'p-03',dose:'250 ml'},{pid:'p-04',dose:'175 ml'},{pid:'p-09',dose:''},{pid:'p-10',dose:''},{pid:'p-11',dose:''},{pid:'p-12',dose:''},{pid:'p-05',dose:''},{pid:'p-06',dose:''},{pid:'p-07',dose:''}]},
+  {id:'t-04',nome:'Goiás Top',sub:'Standak Top + Poncho',ico:'GT',cor:'#F3E5F5',corTxt:'#6A1B9A',
+   produtos:[{pid:'p-13',dose:'200 ml'},{pid:'p-14',dose:'100 ml'},{pid:'p-04',dose:'175 ml'},{pid:'p-05',dose:''},{pid:'p-06',dose:''},{pid:'p-07',dose:''}]},
+  {id:'t-05',nome:'Goiás Top + Inoculante',sub:'Standak Top + CTS-1000',ico:'T+I',cor:'#E8EAF6',corTxt:'#283593',
+   produtos:[{pid:'p-13',dose:'200 ml'},{pid:'p-14',dose:'100 ml'},{pid:'p-04',dose:'175 ml'},{pid:'p-09',dose:''},{pid:'p-05',dose:''},{pid:'p-06',dose:''},{pid:'p-07',dose:''}]}
+];
+
+function saveTsiData(){
+  localStorage.setItem('tsi-products', JSON.stringify(tsiProducts));
+  localStorage.setItem('tsi-protocols', JSON.stringify(tsiProtocols));
+}
+
+function getProdById(pid){ return tsiProducts.find(function(p){return p.pid===pid||p.id===pid;})||null; }
+
+function getProdImg(pid){
+  var p = getProdById(pid);
+  return p && p.img ? p.img : '';
+}
+
+function getProdThumbHTML(pid, size){
+  var p = getProdById(pid);
+  size = size || 36;
+  if(!p) return '<div class="ppi-img" style="width:'+size+'px;height:'+size+'px"><div class="ppi-img-ph">?</div></div>';
+  if(p.img) return '<div class="ppi-img" style="width:'+size+'px;height:'+size+'px"><img src="'+p.img+'" alt="'+p.nome+'"></div>';
+  // Initials placeholder
+  var init = p.nome.split(' ').slice(0,2).map(function(w){return w[0];}).join('');
+  return '<div class="ppi-img" style="width:'+size+'px;height:'+size+'px"><div class="ppi-img-ph">'+init+'</div></div>';
+}
+
+function switchTsiTab(tab, btn){
+  document.querySelectorAll('.tsi-tab').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('tsi-protocolos').style.display = tab==='protocolos' ? '' : 'none';
+  document.getElementById('tsi-produtos').style.display = tab==='produtos' ? '' : 'none';
+}
+
+function renderTSI(){
+  renderTsiProtocols();
+  renderTsiProducts();
+}
+
+function renderTsiProtocols(){
+  var el = document.getElementById('tsi-protocolos');
+  if(!el) return;
+  var html = tsiProtocols.map(function(proto, pi){
+    var prodsHtml = proto.produtos.map(function(pp, ppi){
+      var p = getProdById(pp.pid);
+      if(!p) return '';
+      var imgHtml = p.img
+        ? '<div class="ppi-img"><img src="'+p.img+'" alt="'+p.nome+'"></div>'
+        : '<div class="ppi-img"><div class="ppi-img-ph">'+p.nome.split(' ').slice(0,2).map(function(w){return w[0];}).join('')+'</div></div>';
+      return '<div class="proto-prod-item" id="ppi-'+proto.id+'-'+ppi+'">'
+        + imgHtml
+        + '<div class="ppi-name">'+p.nome+'</div>'
+        + '<input class="ppi-dose-input" value="'+(pp.dose||'')+'" placeholder="dose" onchange="updateProtoDose(\''+proto.id+'\','+ppi+',this.value)">'
+        + '<button class="ppi-rm" onclick="removeProdFromProto(\''+proto.id+'\','+ppi+')" title="Remover">&#10005;</button>'
+        +'</div>';
+    }).join('');
+
+    return '<div class="proto-card">'
+      +'<div class="proto-header'+(pi===0?' expanded':'')+'" onclick="toggleProto(this)">'
+      +'<div class="proto-ico" style="background:'+proto.cor+';color:'+proto.corTxt+'">'+proto.ico+'</div>'
+      +'<div><div style="font-size:.92em;font-weight:600">'+proto.nome+'</div><div style="font-size:.73em;color:var(--text2)">'+proto.sub+'</div></div>'
+      +'<div class="proto-chev">&#9658;</div>'
+      +'</div>'
+      +'<div class="proto-body'+(pi===0?' show':'')+'" id="protobody-'+proto.id+'">'
+      + prodsHtml
+      +'<button class="btn-add-prod-proto" onclick="openPickerForProto(\''+proto.id+'\')">+ Adicionar produto</button>'
+      +'</div></div>';
+  }).join('');
+
+  // Benefícios fixo
+  html += '<div class="proto-card"><div class="proto-header" onclick="toggleProto(this)">'
+    +'<div class="proto-ico" style="background:#E0F7FA;color:#006064">Ben</div>'
+    +'<div><div style="font-size:.92em;font-weight:600">Benefícios do TSI</div><div style="font-size:.73em;color:var(--text2)">Por que tratar industrialmente</div></div>'
+    +'<div class="proto-chev">&#9658;</div></div>'
+    +'<div class="proto-body" style="padding:13px">'
+    +'<div class="bitem"><span class="bdot">&#9679;</span>Uniformidade e precisão na dosagem — processo automatizado</div>'
+    +'<div class="bitem"><span class="bdot">&#9679;</span>Maior agilidade no plantio e redução de custos</div>'
+    +'<div class="bitem"><span class="bdot">&#9679;</span>Múltiplos modos de ação (químico + biológico)</div>'
+    +'<div class="bitem"><span class="bdot">&#9679;</span>Mais segurança para o trabalhador rural</div>'
+    +'<div class="bitem"><span class="bdot">&#9679;</span>Descarte sem intoxicação</div>'
+    +'</div></div>';
+
+  el.innerHTML = html;
+}
+
+function renderTsiProducts(){
+  var el = document.getElementById('tsi-produtos');
+  if(!el) return;
+  // Count usage per product
+  var usage = {};
+  tsiProtocols.forEach(function(proto){
+    proto.produtos.forEach(function(pp){
+      usage[pp.pid] = (usage[pp.pid]||0) + 1;
+    });
+  });
+
+  var html = '<div style="padding:0 14px 10px;display:flex;align-items:center;justify-content:space-between">'
+    +'<div style="font-size:.68em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text2)">'+tsiProducts.length+' produtos cadastrados</div>'
+    +'<button style="padding:6px 12px;border-radius:8px;border:none;background:var(--blue);color:white;font-size:.78em;font-family:var(--font);cursor:pointer;font-weight:600" onclick="openNewProductModal()">+ Novo</button>'
+    +'</div>';
+
+  html += tsiProducts.map(function(prod, idx){
+    var usedIn = usage[prod.id] || 0;
+    var thumbHtml = prod.img
+      ? '<div class="prod-thumb"><img src="'+prod.img+'" alt="'+prod.nome+'"></div>'
+      : '<div class="prod-thumb">'+prod.nome.split(' ').slice(0,2).map(function(w){return w[0];}).join('')+'</div>';
+
+    var imgSection = prod.img
+      ? '<div style="margin-bottom:11px"><img src="'+prod.img+'" class="prod-img-preview"><div class="prod-img-rm" onclick="removeProdImg(\''+prod.id+'\')">&#10005; Remover foto</div></div>'
+      : '<div class="prod-img-area"><input type="file" accept="image/*" onchange="handleProdImg(event,\''+prod.id+'\')"><div style="font-size:.8em;color:var(--text2)">Toque para adicionar foto da embalagem</div></div>';
+
+    return '<div class="prod-card">'
+      +'<div class="prod-card-header" onclick="toggleProdCard(this)">'
+      + thumbHtml
+      +'<div class="prod-info">'
+      +'<div class="prod-name">'+prod.nome+'</div>'
+      +'<div class="prod-cat">'+prod.cat+'</div>'
+      +'<div class="prod-used">'+(usedIn>0?'Usado em '+usedIn+' protocolo'+(usedIn>1?'s':''):'Não usado')+'</div>'
+      +'</div>'
+      +'<div class="prod-chev">&#9658;</div>'
+      +'</div>'
+      +'<div class="prod-body" id="prod-body-'+prod.id+'">'
+      + imgSection
+      +'<div class="prod-edit-row">'
+      +'<input class="fi" id="pname-'+prod.id+'" value="'+prod.nome+'" placeholder="Nome do produto" style="flex:2">'
+      +'<input class="fi" id="pcat-'+prod.id+'" value="'+prod.cat+'" placeholder="Categoria" style="flex:1">'
+      +'</div>'
+      +'<button class="btn-save-prod" onclick="saveProdEdit(\''+prod.id+'\')">Salvar produto</button>'
+      +(usedIn===0?'<button onclick="deleteProd(\''+prod.id+'\')" style="width:100%;padding:8px;border:1px solid var(--red);border-radius:8px;background:white;color:var(--red);font-size:.8em;font-family:var(--font);cursor:pointer;margin-top:5px">Excluir</button>':'')
+      +'</div></div>';
+  }).join('');
+
+  el.innerHTML = html;
+}
+
+function toggleProto(header){
+  header.classList.toggle('expanded');
+  header.nextElementSibling.classList.toggle('show');
+}
+
+function toggleProdCard(header){
+  var body = header.nextElementSibling;
+  header.classList.toggle('expanded');
+  body.classList.toggle('show');
+}
+
+function handleProdImg(e, prodId){
+  var file = e.target.files[0]; if(!file) return;
+  var r = new FileReader();
+  r.onload = function(ev){
+    var p = getProdById(prodId);
+    if(p){ p.img = ev.target.result; saveTsiData(); renderTsiProducts(); renderTsiProtocols(); showToast('Foto salva'); }
+  };
+  r.readAsDataURL(file);
+}
+
+function removeProdImg(prodId){
+  var p = getProdById(prodId);
+  if(p){ p.img = ''; saveTsiData(); renderTsiProducts(); renderTsiProtocols(); showToast('Foto removida'); }
+}
+
+function saveProdEdit(prodId){
+  var p = getProdById(prodId);
+  if(!p) return;
+  var nomeEl = document.getElementById('pname-'+prodId);
+  var catEl = document.getElementById('pcat-'+prodId);
+  if(nomeEl) p.nome = nomeEl.value.trim() || p.nome;
+  if(catEl) p.cat = catEl.value.trim() || p.cat;
+  saveTsiData(); renderTsiProducts(); renderTsiProtocols(); showToast('Produto atualizado');
+}
+
+function deleteProd(prodId){
+  if(!confirm('Excluir produto?')) return;
+  tsiProducts = tsiProducts.filter(function(p){return p.id!==prodId;});
+  saveTsiData(); renderTsiProducts(); showToast('Produto excluído');
+}
+
+function openNewProductModal(){
+  var nome = prompt('Nome do produto:');
+  if(!nome || !nome.trim()) return;
+  var cat = prompt('Categoria (ex: Inseticida, Fungicida, Biológico):') || 'Outro';
+  var newP = {id:'p-'+Date.now(), nome:nome.trim(), cat:cat.trim(), img:''};
+  tsiProducts.push(newP);
+  saveTsiData(); renderTsiProducts(); showToast('Produto adicionado');
+}
+
+function updateProtoDose(protoId, ppi, val){
+  var proto = tsiProtocols.find(function(t){return t.id===protoId;});
+  if(proto && proto.produtos[ppi]) proto.produtos[ppi].dose = val;
+  saveTsiData();
+}
+
+function removeProdFromProto(protoId, ppi){
+  var proto = tsiProtocols.find(function(t){return t.id===protoId;});
+  if(!proto) return;
+  proto.produtos.splice(ppi, 1);
+  saveTsiData(); renderTsiProtocols(); showToast('Produto removido');
+}
+
+var _pickerProtoId = null;
+function openPickerForProto(protoId){
+  _pickerProtoId = protoId;
+  document.getElementById('picker-title').textContent = 'Adicionar Produto';
+  document.getElementById('picker-dose-form').style.display = 'none';
+  var proto = tsiProtocols.find(function(t){return t.id===protoId;});
+  var usedPids = proto ? proto.produtos.map(function(pp){return pp.pid;}) : [];
+  var html = tsiProducts.map(function(p){
+    var inUse = usedPids.indexOf(p.id) >= 0;
+    var imgHtml = p.img
+      ? '<div class="picker-item-img"><img src="'+p.img+'" alt="'+p.nome+'"></div>'
+      : '<div class="picker-item-img" style="font-size:.6em;font-weight:700;color:var(--text3)">'+p.nome.split(' ').slice(0,2).map(function(w){return w[0];}).join('')+'</div>';
+    return '<div class="picker-item" onclick="selectPickerProduct(\''+p.id+'\')" style="'+(inUse?'opacity:.45':'')+'">'
+      + imgHtml
+      +'<div><div class="picker-item-name">'+p.nome+(inUse?' ✓':' ')+'</div><div class="picker-item-cat">'+p.cat+'</div></div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('picker-list').innerHTML = html;
+  document.getElementById('picker-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+var _pickerSelPid = null;
+function selectPickerProduct(pid){
+  _pickerSelPid = pid;
+  var p = getProdById(pid);
+  if(!p) return;
+  document.getElementById('picker-sel-name').textContent = p.nome;
+  document.getElementById('picker-dose-val').value = '';
+  document.getElementById('picker-dose-form').style.display = '';
+  document.getElementById('picker-dose-val').focus();
+}
+
+function confirmPickerProduct(){
+  if(!_pickerProtoId || !_pickerSelPid) return;
+  var dose = document.getElementById('picker-dose-val').value.trim();
+  var proto = tsiProtocols.find(function(t){return t.id===_pickerProtoId;});
+  if(!proto) return;
+  proto.produtos.push({pid:_pickerSelPid, dose:dose});
+  saveTsiData(); renderTsiProtocols(); closePicker(); showToast('Produto adicionado');
+}
+
+function closePicker(){
+  document.getElementById('picker-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  _pickerProtoId = null; _pickerSelPid = null;
+}
+
+
+renderSoja();
+renderTSI();
+renderSectionBanner('soja');
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+</script>
 </body>
 </html>
